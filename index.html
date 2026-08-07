@@ -908,7 +908,10 @@ function loop(ts){
     eggs=eggs.filter(e=>!e.dead);
 
     const al0=alive.filter(a=>!a.dead&&a.team===0),al1=alive.filter(a=>!a.dead&&a.team===1);
-    if(al0.length===0||al1.length===0){gameState='ended';const wteam=al0.length>0?0:1;winner=alive.find(a=>a.team===wteam&&!a.dead);document.getElementById('bf').disabled=false;}
+    // 即使动物全灭，如果场上还有该队的蛋（可能孵化翻盘），不判负
+    const hasEgg0=eggs.some(e=>!e.dead&&e.owner&&e.owner.team===0);
+    const hasEgg1=eggs.some(e=>!e.dead&&e.owner&&e.owner.team===1);
+    if((al0.length===0&&!hasEgg0)||(al1.length===0&&!hasEgg1)){gameState='ended';const wteam=al0.length>0||hasEgg0?0:1;winner=alive.find(a=>a.team===wteam&&!a.dead);document.getElementById('bf').disabled=false;}
   }
 
   eggs.forEach(e=>e.draw(ctx));
