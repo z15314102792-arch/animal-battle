@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>动物大战 v0.5</title>
+<title>动物大战 v0.6</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:#3a2f28;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:'PingFang SC','Microsoft YaHei',sans-serif;user-select:none;-webkit-user-select:none;padding:3px;touch-action:manipulation}
@@ -45,7 +45,7 @@
     <button class="speed-btn" data-s="3">3x</button>
   </div>
 </div>
-<div class="info">v0.5 · 空格开始 R重置 F随机 1-3调速</div>
+<div class="info">v0.6 · 空格开始 R重置 F随机 1-3调速</div>
 
 <script>
 // ==================== 画布 ====================
@@ -90,62 +90,62 @@ function drawBG(ctx){
 }
 
 // ==================== 动物数据 v0.5 ====================
-// 通用: 每个动物5%基础暴击率,攻击时随机触发2x伤害
+// v0.6: 全局速度提升(×60), 眩晕保护, 数值重平衡
 const ANIMALS={
   chicken:{
     id:'chicken',name:'母鸡',emoji:'🐔',
-    hp:85,speed:0.36,damage:4,size:30,
-    color:'#f4a460',desc:'远程撒米🍚(25%打偏)·下蛋→4阶段成长→滚雪球',
+    hp:85,speed:0.40,damage:4,size:30,
+    color:'#f4a460',desc:'远程撒米🍚(25%打偏)·下蛋→滚雪球',
     ranged:true,rangedDmg:8,rangedCD:2600,rangedRange:170,rangedEmoji:'🍚',rangedSpeed:4.5,rangedMiss:0.25,
     skills:[{name:'下蛋',emoji:'🥚',cd:16000,type:'lay_egg',desc:'下蛋→蛋HP1→雏鸡→青年鸡→母鸡/公鸡'}]
   },
   bear:{
     id:'bear',name:'棕熊',emoji:'🐻',
-    hp:185,speed:0.28,damage:18,size:42,color:'#8B7355',
+    hp:170,speed:0.34,damage:16,size:42,color:'#8B7355',
     passives:[{type:'rage',threshold:0.3,dmgBonus:0.5,desc:'HP<30%伤害+50%'},{type:'hibernate',interval:14000,pause:1800,wakeDmg:0.8,desc:'偶尔冬眠→醒来重击'}],
-    skills:[{name:'眩晕拍击',emoji:'💫',cd:7500,type:'stun',duration:2000,desc:'下次攻击眩晕2秒'}]
+    skills:[{name:'眩晕拍击',emoji:'💫',cd:8000,type:'stun',duration:1500,desc:'下次攻击眩晕1.5秒'}]
   },
   wolf:{
     id:'wolf',name:'狼',emoji:'🐺',
-    hp:95,speed:0.78,damage:9,size:32,color:'#a0a0a0',
+    hp:95,speed:0.72,damage:9,size:32,color:'#a0a0a0',
     passives:[{type:'loneWolf',radius:100,dmgBonus:0.25,desc:'无同伴时伤害+25%'}],
     skills:[{name:'流血撕咬',emoji:'🩸',cd:5000,type:'bleed',damage:5,duration:3500,tickInterval:700,desc:'命中后流血3.5秒'}]
   },
   bull:{
     id:'bull',name:'公牛',emoji:'🐂',
-    hp:155,speed:0.42,damage:11,size:38,color:'#c4a882',
-    passives:[{type:'grudge',maxStacks:5,dmgPerStack:0.1,decay:5000,desc:'每挨打一次伤害+10%(最高+50%)'}],
-    skills:[{name:'冲锋',emoji:'💨',cd:6000,type:'charge',damage:22,knockback:12,desc:'猛冲22伤+击退'}]
+    hp:155,speed:0.46,damage:11,size:38,color:'#c4a882',
+    passives:[{type:'grudge',maxStacks:5,dmgPerStack:0.1,decay:5000,desc:'每挨打伤害+10%(最高+50%)'}],
+    skills:[{name:'冲锋',emoji:'💨',cd:6500,type:'charge',damage:22,knockback:15,desc:'猛冲22伤+击退'}]
   },
   eagle:{
     id:'eagle',name:'鹰',emoji:'🦅',
-    hp:70,speed:0.72,damage:13,size:30,color:'#f5f5f5',
+    hp:75,speed:0.72,damage:13,size:30,color:'#f5f5f5',
     passives:[{type:'dodge',chance:0.18,desc:'18%闪避近战攻击'}],
-    skills:[{name:'俯冲暴击',emoji:'⚡',cd:4800,type:'crit',multiplier:2.8,desc:'下次攻击2.8倍伤害'}]
+    skills:[{name:'俯冲暴击',emoji:'⚡',cd:5000,type:'crit',multiplier:2.8,desc:'下次攻击2.8倍伤害'}]
   },
   snake:{
     id:'snake',name:'蛇',emoji:'🐍',
-    hp:82,speed:0.5,damage:6,size:28,color:'#5dade2',
-    passives:[{type:'contagion',radius:80,spreadDmg:4,duration:3000,desc:'击杀敌人→毒溅射周围敌人'}],
-    skills:[{name:'毒液',emoji:'🧪',cd:4000,type:'poison',damage:5,duration:4500,tickInterval:900,desc:'命中后中毒4.5秒'}]
+    hp:90,speed:0.52,damage:6,size:28,color:'#5dade2',
+    passives:[{type:'contagion',radius:80,spreadDmg:4,duration:3000,desc:'击杀→毒溅射周围敌人'}],
+    skills:[{name:'毒液',emoji:'🧪',cd:4200,type:'poison',damage:5,duration:4500,tickInterval:900,desc:'命中后中毒4.5秒'}]
   },
   lion:{
     id:'lion',name:'狮子',emoji:'🦁',
-    hp:130,speed:0.48,damage:14,size:38,color:'#e8a87c',
+    hp:130,speed:0.50,damage:14,size:38,color:'#e8a87c',
     passives:[{type:'intimidate',radius:75,fleeChance:0.06,desc:'周围敌人6%/秒概率逃跑'}],
     skills:[{name:'咆哮',emoji:'🦁',cd:6500,type:'roar',weakenPct:0.4,duration:3500,desc:'咆哮降敌40%攻击3.5秒'}]
   },
   elephant:{
     id:'elephant',name:'大象',emoji:'🐘',
-    hp:240,speed:0.25,damage:14,size:48,color:'#b0a090',
+    hp:240,speed:0.30,damage:15,size:48,color:'#b0a090',
     passives:[{type:'unstoppable',desc:'免疫眩晕'},{type:'trample',radius:35,dps:0.8,desc:'碾压贴身小型敌人'}],
-    skills:[{name:'地动山摇',emoji:'🌍',cd:9500,type:'quake',damage:12,stunDuration:2000,desc:'AOE12伤+眩晕2秒'}]
+    skills:[{name:'地动山摇',emoji:'🌍',cd:9500,type:'quake',damage:12,stunDuration:1800,desc:'AOE12伤+眩晕1.8秒'}]
   },
   turtle:{
     id:'turtle',name:'乌龟',emoji:'🐢',
-    hp:110,speed:0.26,damage:5,size:30,color:'#6b8e6b',
+    hp:120,speed:0.30,damage:6,size:30,color:'#6b8e6b',
     passives:[{type:'regeneration',delay:3000,hpPerSec:1.2,desc:'3秒不受击后回血1.2/秒'}],
-    skills:[{name:'缩壳',emoji:'🐢',cd:7500,type:'shield',reducePct:0.7,duration:3500,desc:'减伤70%+反伤25%持续3.5秒'}]
+    skills:[{name:'缩壳',emoji:'🐢',cd:7500,type:'shield',reducePct:0.7,duration:3500,desc:'减伤70%持续3.5秒'}]
   }
 };
 
@@ -159,7 +159,7 @@ const ROOSTER_CFG={name:'公鸡',emoji:'🐓',hp:38,speed:0.42,damage:8,size:26,
 let gameSpeed=2,animals=[],eggs=[],effects=[],gameState='idle',winner=null,lastTime=0,frameId=null;
 
 // ==================== 常量 ====================
-const ATK_CD=900,KB=2,DIR_MIN=1000,DIR_MAX=2800,BASE_CRIT=0.05;
+const ATK_CD=1050,KB=3,DIR_MIN=1000,DIR_MAX=2800,BASE_CRIT=0.05,RECOIL_TIME=350,STUN_IMMUN=2500;
 
 // ==================== 动物类 ====================
 class Animal{
@@ -167,7 +167,7 @@ class Animal{
     Object.assign(this,cfg);this.maxHp=cfg.hp;
     this.x=x;this.y=arenaT+(arenaB-arenaT)*(0.2+Math.random()*0.6);
     this.team=team;this.owner=owner;
-    const spd=cfg.speed*50*(0.85+Math.random()*0.3);
+    const spd=cfg.speed*60*(0.92+Math.random()*0.16); // v0.6: 提速+减小波动
     this.vx=(team===0?1:-1)*spd;this.vy=(Math.random()-0.5)*spd;
     this.atkTimer=Math.random()*ATK_CD;this.dirTimer=Math.random()*DIR_MAX;
     this.stunned=false;this.stunTimer=0;this.flashTimer=0;this.dead=false;
@@ -178,15 +178,16 @@ class Animal{
     this.critNext=false;this.stunNext=false;this.bleedNext=false;this.poisonNext=false;this.chargeReady=false;
     this.slowed=false;this.slowPct=0;this.slowTimer=0;
     this.passives=cfg.passives||[];
-    this.followOffsetX=(Math.random()-0.5)*30;this.followOffsetY=(Math.random()-0.5)*20+15/*偏后方*/;
+    this.followOffsetX=(Math.random()-0.5)*30;this.followOffsetY=(Math.random()-0.5)*20+15;
     this.aliveTimer=0;
     // 被动状态
-    this.grudgeStacks=0;this.grudgeTimer=0; // 牛
-    this.lastHitTimer=3000; // 龟
-    this.hibernateCD=0;this.hibernating=false;this.hibernateTimer=0;this.wakeReady=false; // 熊
-    this._chickPhase=cfg._chickPhase;this._chickTimer=0; // 鸡成长阶段(undefined=非小鸡)
+    this.grudgeStacks=0;this.grudgeTimer=0;
+    this.lastHitTimer=3000;
+    this.hibernateCD=0;this.hibernating=false;this.hibernateTimer=0;this.wakeReady=false;
+    this._chickPhase=cfg._chickPhase;this._chickTimer=0;
     this._canLay=cfg._canLay||false;
-    this._killer=false; // 刚杀了敌人(蛇毒爆用)
+    this._killer=false;
+    this.recoilTimer=0;this.stunImmune=0; // v0.6: 碰撞后摇+眩晕保护
   }
 
   update(dt){
@@ -203,6 +204,8 @@ class Animal{
     if(this.flashTimer>0)this.flashTimer-=rd;
     if(this.atkTimer>0)this.atkTimer-=rd;
     if(this.rangedTimer>0)this.rangedTimer-=rd;
+    if(this.recoilTimer>0)this.recoilTimer-=rd;
+    if(this.stunImmune>0)this.stunImmune-=rd;
     this.skills.forEach(s=>{if(s.cdTimer>0)s.cdTimer-=rd;});
     // 熊冬眠
     if(this.passives.some(p=>p.type==='hibernate')){
@@ -236,7 +239,7 @@ class Animal{
     }
     let spdMult=1;if(this.slowed)spdMult*=(1-this.slowPct);
     const curSpd=Math.sqrt(this.vx*this.vx+this.vy*this.vy)||1;
-    const maxSpd=this.speed*50*spdMult;
+    const maxSpd=this.speed*60*spdMult;
     if(curSpd>maxSpd){this.vx=this.vx/curSpd*maxSpd;this.vy=this.vy/curSpd*maxSpd;}
     this.x+=this.vx*rd/1000;this.y+=this.vy*rd/1000;
     this._clampToArena();
@@ -260,14 +263,14 @@ class Animal{
   _followOwner(){
     const ox=this.owner.x+this.followOffsetX,oy=this.owner.y+this.followOffsetY;
     const dx=ox-this.x,dy=oy-this.y,dist=Math.sqrt(dx*dx+dy*dy)||1;
-    const spd=this.speed*50;
+    const spd=this.speed*60;
     if(dist>45){this.vx+=(dx/dist)*spd*0.12;this.vy+=(dy/dist)*spd*0.12;const mag=Math.sqrt(this.vx*this.vx+this.vy*this.vy);if(mag>spd){this.vx=this.vx/mag*spd;this.vy=this.vy/mag*spd;}}
     else if(dist>12){this.vx+=(dx/dist)*spd*0.04;this.vy+=(dy/dist)*spd*0.04;}
     this._clampToArena();
   }
 
   _newDir(){
-    const spd=this.speed*50*(0.85+Math.random()*0.3);
+    const spd=this.speed*60*(0.92+Math.random()*0.16);
     const a=Math.random()*Math.PI*2;
     this.vx=Math.cos(a)*spd;this.vy=Math.sin(a)*spd;
   }
@@ -343,8 +346,9 @@ class Animal{
     if(target.shieldActive){const refl=0.25;const rdmg=Math.round(dmg*refl);this.hp-=rdmg;this.flashTimer=100;spawnFX('damage',this.x,this.y-16,rdmg,'#6b8e6b');if(this.hp<=0){this.hp=0;this.dead=true;}}
     // 大象免疫眩晕
     const tUnstop=target.passives.some(p=>p.type==='unstoppable');
-    if(willStun&&!tUnstop){target.stunned=true;target.stunTimer=this.skills.find(s=>s.type==='stun')?.duration||2000;spawnFX('text',target.x,target.y-24,'眩晕!','#ffd700');}
-    if(willStun&&tUnstop){spawnFX('text',target.x,target.y-24,'免疫!','#b0a090');}
+    if(willStun&&!tUnstop&&target.stunImmune<=0){target.stunned=true;target.stunTimer=this.skills.find(s=>s.type==='stun')?.duration||1500;target.stunImmune=STUN_IMMUN;spawnFX('text',target.x,target.y-24,'眩晕!','#ffd700');}
+    else if(willStun&&tUnstop){spawnFX('text',target.x,target.y-24,'免疫!','#b0a090');this.stunNext=false;}
+    else if(willStun&&target.stunImmune>0){spawnFX('text',target.x,target.y-24,'抵抗!','#aaa');this.stunNext=false;}
     this.stunNext=false;
     if(willBleed){target.dotEffects.push({dmg:this.skills.find(s=>s.type==='bleed')?.damage||5,dur:this.skills.find(s=>s.type==='bleed')?.duration||3500,tick:this.skills.find(s=>s.type==='bleed')?.tickInterval||700,elapsed:0,tickAcc:0});spawnFX('text',target.x,target.y-24,'流血!','#e74c3c');}
     this.bleedNext=false;
@@ -371,7 +375,7 @@ class Animal{
       case'crit':this.critNext=true;spawnFX('text',this.x,this.y-20,skill.name+'!','#ffd700');break;
       case'charge':this.chargeReady=true;if(t){const dx=t.x-this.x,dy=t.y-this.y,dist=Math.sqrt(dx*dx+dy*dy)||1;this.vx=(dx/dist)*this.speed*180;this.vy=(dy/dist)*this.speed*130;}spawnFX('text',this.x,this.y-20,skill.name+'!','#cd853f');break;
       case'roar':if(t){t.weakenPct=skill.weakenPct;t.weakenTimer=skill.duration;spawnFX('text',t.x,t.y-20,'攻击↓','#8e44ad');}spawnFX('text',this.x,this.y-20,'咆哮!','#e8a87c');break;
-      case'quake':enemies.forEach(e=>{const dd=skill.damage||0;e.hp-=dd;if(e.hp<=0){e.hp=0;e.dead=true;}e.flashTimer=120;const eu=e.passives.some(p=>p.type==='unstoppable');if(!eu){e.stunned=true;e.stunTimer=skill.stunDuration;}spawnFX('damage',e.x,e.y-16,dd,'#cd853f');});spawnFX('text',this.x,this.y-20,skill.name+'!','#cd853f');break;
+      case'quake':enemies.forEach(e=>{const dd=skill.damage||0;e.hp-=dd;if(e.hp<=0){e.hp=0;e.dead=true;}e.flashTimer=120;const eu=e.passives.some(p=>p.type==='unstoppable');if(!eu&&e.stunImmune<=0){e.stunned=true;e.stunTimer=skill.stunDuration;e.stunImmune=STUN_IMMUN;}spawnFX('damage',e.x,e.y-16,dd,'#cd853f');});spawnFX('text',this.x,this.y-20,skill.name+'!','#cd853f');break;
       case'shield':this.shieldActive=true;this.shieldTimer=skill.duration;this.shieldReduce=skill.reducePct;spawnFX('text',this.x,this.y-20,'缩壳!','#6b8e6b');break;
       case'lay_egg':eggs.push(new Egg(this.x,this.y,this));spawnFX('text',this.x,this.y-20,'下蛋!','#f4a460');break;
     }
@@ -405,10 +409,8 @@ class Animal{
     if(this.critNext){ctx.strokeStyle='rgba(255,215,0,0.45)';ctx.lineWidth=2;ctx.setLineDash([3,3]);ctx.beginPath();ctx.arc(this.x,this.y,this.size+5,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
     // 熊狂暴光环
     if(this.passives.some(p=>p.type==='rage')&&this.hp/this.maxHp<0.3){ctx.strokeStyle='rgba(255,70,40,0.5)';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(this.x,this.y,this.size+6,0,Math.PI*2);ctx.stroke();}
-    // 身体
+    // 纯图标(无背景圈)
     const fc=this.flashTimer>0?'#fff':this.color;
-    ctx.fillStyle=fc;ctx.globalAlpha=0.18;ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
-    // 无边框,纯图标
     // Emoji
     const es=this.isMinion?this.size*0.95:this.size*1.15;
     ctx.font=`${es}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(this.emoji,this.x,this.y);
@@ -574,7 +576,7 @@ function loop(ts){
       const intim=a.passives.find(p=>p.type==='intimidate');
       if(!intim||a.stunned)return;
       const foes=alive.filter(e=>e.team!==a.team&&!e.dead&&!e.stunned&&Math.hypot(e.x-a.x,e.y-a.y)<intim.radius);
-      foes.forEach(f=>{if(Math.random()<intim.fleeChance*dt/1000){const dx=f.x-a.x,dy=f.y-a.y,dist=Math.hypot(dx,dy)||1;f.vx=(dx/dist)*f.speed*70;f.vy=(dy/dist)*f.speed*50;f.dirTimer=DIR_MIN+Math.random()*1000;spawnFX('text',f.x,f.y-16,'逃跑!','#e8a87c');}});
+      foes.forEach(f=>{if(Math.random()<intim.fleeChance*dt/1000){const dx=f.x-a.x,dy=f.y-a.y,dist=Math.hypot(dx,dy)||1;f.vx=(dx/dist)*f.speed*70;f.vy=(dy/dist)*f.speed*60;f.dirTimer=DIR_MIN+Math.random()*1000;spawnFX('text',f.x,f.y-16,'逃跑!','#e8a87c');}});
     });
 
     // 大象践踏
@@ -592,21 +594,21 @@ function loop(ts){
         const dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy)||1;
         const bodyDist=a.size+b.size;
 
-        // 物理推挤+碰撞换方向
+        // 物理推挤+碰撞换方向+短暂后摇
         if(dist<bodyDist){
           const ov=bodyDist-dist,nx=dx/dist,ny=dy/dist;
           a.x-=nx*ov*0.5;a.y-=ny*ov*0.5;
           b.x+=nx*ov*0.5;b.y+=ny*ov*0.5;
-          // 碰撞=随机新方向(确保全场移动)
-          if(!a.isMinion||a._chickPhase>=2||!a.owner||a.owner.dead)a._newDir();
-          if(!b.isMinion||b._chickPhase>=2||!b.owner||b.owner.dead)b._newDir();
+          if(!a.isMinion||a._chickPhase>=2||!a.owner||a.owner.dead){a._newDir();a.recoilTimer=RECOIL_TIME;}
+          if(!b.isMinion||b._chickPhase>=2||!b.owner||b.owner.dead){b._newDir();b.recoilTimer=RECOIL_TIME;}
         }
 
         // 近战攻击: 身体接触即攻击 (v0.5: 小鸡phase0不能攻击)
         const atkDist=bodyDist+8;
         if(a.team!==b.team&&!a.dead&&!b.dead&&dist<atkDist){
-          if(a.atkTimer<=0&&!a.ranged&&!a.stunned&&!(a._chickPhase===0)){a.dealDmg(b);a.atkTimer=ATK_CD;}
-          if(!b.dead&&b.atkTimer<=0&&!b.ranged&&!b.stunned&&!(b._chickPhase===0)){b.dealDmg(a);b.atkTimer=ATK_CD;}
+          // v0.6: 后摇期间不攻击
+          if(a.atkTimer<=0&&!a.ranged&&!a.stunned&&a.recoilTimer<=0&&!(a._chickPhase===0)){a.dealDmg(b);a.atkTimer=ATK_CD;}
+          if(!b.dead&&b.atkTimer<=0&&!b.ranged&&!b.stunned&&b.recoilTimer<=0&&!(b._chickPhase===0)){b.dealDmg(a);b.atkTimer=ATK_CD;}
         }
         // 远程攻击
         if(a.team!==b.team&&!a.dead&&!b.dead){
