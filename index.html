@@ -108,7 +108,7 @@ const ANIMALS={
   wolf:{
     id:'wolf',name:'狼',emoji:'🐺',
     hp:95,speed:0.78,damage:9,size:32,color:'#a0a0a0',
-    passives:[{type:'loneWolf',radius:150,dmgBonus:0.25,desc:'无同伴时伤害+25%'}],
+    passives:[{type:'loneWolf',radius:100,dmgBonus:0.25,desc:'无同伴时伤害+25%'}],
     skills:[{name:'流血撕咬',emoji:'🩸',cd:5000,type:'bleed',damage:5,duration:3500,tickInterval:700,desc:'命中后流血3.5秒'}]
   },
   bull:{
@@ -132,13 +132,13 @@ const ANIMALS={
   lion:{
     id:'lion',name:'狮子',emoji:'🦁',
     hp:130,speed:0.48,damage:14,size:38,color:'#e8a87c',
-    passives:[{type:'intimidate',radius:120,fleeChance:0.08,desc:'周围敌人8%/秒概率逃跑'}],
+    passives:[{type:'intimidate',radius:75,fleeChance:0.06,desc:'周围敌人6%/秒概率逃跑'}],
     skills:[{name:'咆哮',emoji:'🦁',cd:6500,type:'roar',weakenPct:0.4,duration:3500,desc:'咆哮降敌40%攻击3.5秒'}]
   },
   elephant:{
     id:'elephant',name:'大象',emoji:'🐘',
     hp:240,speed:0.25,damage:14,size:48,color:'#b0a090',
-    passives:[{type:'unstoppable',desc:'免疫眩晕'},{type:'trample',radius:55,dps:2,desc:'碾压周围小型敌人'}],
+    passives:[{type:'unstoppable',desc:'免疫眩晕'},{type:'trample',radius:35,dps:0.8,desc:'碾压贴身小型敌人'}],
     skills:[{name:'地动山摇',emoji:'🌍',cd:9500,type:'quake',damage:12,stunDuration:2000,desc:'AOE12伤+眩晕2秒'}]
   },
   turtle:{
@@ -225,15 +225,13 @@ class Animal{
       }
     }
 
-    // 移动 ===
+    // 移动 === (v0.5.1: 直线移动,碰墙/碰撞才换方向)
     if(this.hibernating){this.vx*=0.9;this.vy*=0.9;this.x+=this.vx*rd/1000;this.y+=this.vy*rd/1000;this._clampToArena();return;}
     if(this.isMinion&&this.owner&&!this.owner.dead&&this._chickPhase<2){
-      this._followOwner(); // 幼年鸡跟妈妈
+      this._followOwner();
     }else{
       if(!this.isMinion||this._chickPhase>=2||!this.owner||this.owner.dead){
-        this.dirTimer-=rd;
-        if(this.dirTimer<=0){this._newDir();this.dirTimer=DIR_MIN+Math.random()*(DIR_MAX-DIR_MIN);}
-        this._wallBounce();
+        this._wallBounce(); // 碰墙自动换随机方向
       }
     }
     let spdMult=1;if(this.slowed)spdMult*=(1-this.slowPct);
@@ -269,41 +267,18 @@ class Animal{
   }
 
   _newDir(){
-    // v0.5: 随机为主+少量寻敌,去除中心偏向
-    const enemies=animals.filter(a=>a.team!==this.team&&!a.dead);
-    const spd=this.speed*50*(0.7+Math.random()*0.6);
-    const r=Math.random();
-    let tx,ty;
-    if(r<0.3&&enemies.length>0){
-      // 30%朝最近敌人
-      let best=null,bestD=Infinity;
-      enemies.forEach(e=>{const d=Math.hypot(e.x-this.x,e.y-this.y);if(d<bestD){bestD=d;best=e;}});
-      if(best){tx=best.x;ty=best.y;}
-    }else if(r<0.45&&enemies.length>0){
-      // 15%反向逃跑(低血量时)
-      let best=null,bestD=Infinity;
-      enemies.forEach(e=>{const d=Math.hypot(e.x-this.x,e.y-this.y);if(d<bestD){bestD=d;best=e;}});
-      if(best){tx=this.x-(best.x-this.x);ty=this.y-(best.y-this.y);}
-    }else if(r<0.6){
-      // 15%横移(垂直敌人方向绕圈)
-      // 纯随机方向
-    }
-    // 其余全部随机
-    if(tx!==undefined){
-      const dx=tx-this.x,dy=ty-this.y,dist=Math.sqrt(dx*dx+dy*dy)||1;
-      this.vx=(dx/dist)*spd;this.vy=(dy/dist)*spd;
-    }else{
-      const a=Math.random()*Math.PI*2;
-      this.vx=Math.cos(a)*spd;this.vy=Math.sin(a)*spd;
-    }
+    const spd=this.speed*50*(0.85+Math.random()*0.3);
+    const a=Math.random()*Math.PI*2;
+    this.vx=Math.cos(a)*spd;this.vy=Math.sin(a)*spd;
   }
 
   _wallBounce(){
-    const r=this.size;
-    if(this.x<arenaL+r){this.x=arenaL+r;this.vx=Math.abs(this.vx)*0.5;}
-    if(this.x>arenaR-r){this.x=arenaR-r;this.vx=-Math.abs(this.vx)*0.5;}
-    if(this.y<arenaT+r){this.y=arenaT+r;this.vy=Math.abs(this.vy)*0.5;}
-    if(this.y>arenaB-r){this.y=arenaB-r;this.vy=-Math.abs(this.vy)*0.5;}
+    const r=this.size;let bounced=false;
+    if(this.x<arenaL+r){this.x=arenaL+r;bounced=true;}
+    if(this.x>arenaR-r){this.x=arenaR-r;bounced=true;}
+    if(this.y<arenaT+r){this.y=arenaT+r;bounced=true;}
+    if(this.y>arenaB-r){this.y=arenaB-r;bounced=true;}
+    if(bounced)this._newDir();
   }
 
   _clampToArena(){
@@ -433,7 +408,7 @@ class Animal{
     // 身体
     const fc=this.flashTimer>0?'#fff':this.color;
     ctx.fillStyle=fc;ctx.globalAlpha=0.18;ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
-    ctx.strokeStyle=this.flashTimer>0?'#fff':'rgba(255,255,255,0.18)';ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.stroke();
+    // 无边框,纯图标
     // Emoji
     const es=this.isMinion?this.size*0.95:this.size*1.15;
     ctx.font=`${es}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(this.emoji,this.x,this.y);
@@ -455,15 +430,13 @@ class Animal{
 }
 
 // ==================== 蛋类 v0.5 ====================
-// 阶段0: 🥚蛋 HP=1 不可动 10s
-// 阶段1: 🐣孵化 HP=1 不可动 5s
-// 阶段2: 🐤雏鸡 HP=5 不可动 6s (实际已破壳,还在原地)
-// 阶段3: 🐥青年鸡前 HP=8 不可动 6s → 孵化出 Chick(phase0)
+// 阶段0: 🥚蛋 HP=1 不可动 16s(合并原蛋+破壳)
+// 阶段1: 🐤雏鸡 HP=5 不可动 8s
+// 阶段2: 🐥待出 HP=8 不可动 8s → 孵化出 Chick(phase0)
 const EGG_STAGES=[
-  {emoji:'🥚',name:'蛋',size:12,hp:1,time:10000,color:'#fff8e0'},
-  {emoji:'🐣',name:'破壳',size:16,hp:1,time:5000,color:'#fffacd'},
-  {emoji:'🐤',name:'雏鸡',size:20,hp:5,time:6000,color:'#fffde0'},
-  {emoji:'🐥',name:'待出',size:24,hp:8,time:6000,color:'#fff9c4'}
+  {emoji:'🥚',name:'蛋',size:12,hp:1,time:16000,color:'#fff8e0'},
+  {emoji:'🐤',name:'雏鸡',size:20,hp:5,time:8000,color:'#fffde0'},
+  {emoji:'🐥',name:'待出',size:24,hp:8,time:8000,color:'#fff9c4'}
 ];
 
 class Egg{
@@ -480,13 +453,13 @@ class Egg{
     this.accTime+=dt;this.bobOff=Math.sin(this.accTime/400)*1.5;
     if(this.hitCD>0)this.hitCD-=dt;
     if(this.flashTimer>0)this.flashTimer-=dt;
-    if(this.stage<3&&this.accTime>=this.cur.time){
+    if(this.stage<2&&this.accTime>=this.cur.time){
       this.accTime-=this.cur.time;this.stage++;
-      if(this.stage<3){
+      if(this.stage<2){
         this.hp=EGG_STAGES[this.stage].hp;this.maxHp=this.hp;
         spawnFX('text',this.x,this.y-14,EGG_STAGES[this.stage].name+'!','#f4a460');
       }
-      if(this.stage>=3){
+      if(this.stage>=2){
         this.dead=true;
         const cfg={...CHICK_CFG};
         const chick=new Animal(cfg,this.x,this.owner.team,this.owner);
@@ -528,7 +501,7 @@ class Egg{
     ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fillRect(this.x-bbw/2,bby,bbw,bbh);
     ctx.fillStyle='#ff8c55';ctx.fillRect(this.x-bbw/2,bby,bbw*(this.hp/this.maxHp),bbh);
     // 横条进度条(金色,粗)
-    if(this.stage<3){
+    if(this.stage<2){
       const pbw=s*2.0,pbh=4,pby=bby+5;
       ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fillRect(this.x-pbw/2,pby,pbw,pbh);
       const p=this.accTime/c.time;
@@ -619,8 +592,15 @@ function loop(ts){
         const dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy)||1;
         const bodyDist=a.size+b.size;
 
-        // 物理推挤
-        if(dist<bodyDist){const ov=bodyDist-dist,nx=dx/dist,ny=dy/dist;a.x-=nx*ov*0.5;a.y-=ny*ov*0.5;b.x+=nx*ov*0.5;b.y+=ny*ov*0.5;}
+        // 物理推挤+碰撞换方向
+        if(dist<bodyDist){
+          const ov=bodyDist-dist,nx=dx/dist,ny=dy/dist;
+          a.x-=nx*ov*0.5;a.y-=ny*ov*0.5;
+          b.x+=nx*ov*0.5;b.y+=ny*ov*0.5;
+          // 碰撞=随机新方向(确保全场移动)
+          if(!a.isMinion||a._chickPhase>=2||!a.owner||a.owner.dead)a._newDir();
+          if(!b.isMinion||b._chickPhase>=2||!b.owner||b.owner.dead)b._newDir();
+        }
 
         // 近战攻击: 身体接触即攻击 (v0.5: 小鸡phase0不能攻击)
         const atkDist=bodyDist+8;
