@@ -253,46 +253,50 @@ class Animal{
     if(this.diveTimer>0){
       this.diveTimer-=rd;
       const prog=1-this.diveTimer/this.diveMax;
+      let diveAborted=false;
       // 检查目标是否逃出锁定范围
       if(this.diveTarget&&!this.diveTarget.dead&&prog>0.3){
         const escDist=Math.hypot(this.diveTarget.x-this.diveLockX,this.diveTarget.y-this.diveLockY);
         if(escDist>this.diveSkill.lockRange*0.6){
           // 目标逃脱! 自晕+双倍CD
+          diveAborted=true;
           this.diveTimer=0;this.drawY=0;
           const sk=this.skills.find(s=>s.type==='dive');
           if(sk)sk.cdTimer=sk.cd*2;
           this.stunned=true;this.stunTimer=1500;this.stunImmune=STUN_IMMUN;
           spawnFX('text',this.x,this.y-20,'扑空!','#ff6b6b');
           for(let i=0;i<8;i++)spawnFX('trail',this.x,this.y,{emoji:'💢',life:500,vx:(Math.random()-0.5)*40,vy:(Math.random()-0.5)*30-10},'#ff6b6b',0.8);
-          this.diveTarget=null;this.diveSkill=null;continue;
+          this.diveTarget=null;this.diveSkill=null;
         }
       }
-      // 飞向锁定位置（不跟踪目标）
-      const dx=this.diveLockX-this.x,dy=this.diveLockY-this.y,dist=Math.hypot(dx,dy)||1;
-      const spd=this.speed*this.diveSkill.diveSpeed*(0.5+prog*0.5);
-      this.vx+=(dx/dist)*spd*0.25;this.vy+=(dy/dist)*spd*0.25;
-      const mag=Math.hypot(this.vx,this.vy);
-      if(mag>spd){this.vx=this.vx/mag*spd;this.vy=this.vy/mag*spd;}
-      // 俯冲轨迹拖尾
-      if(Math.random()<0.7)spawnFX('trail',this.x-this.vx*0.1,this.y-this.vy*0.1,{emoji:'💨',life:300,vx:-this.vx*0.2,vy:-this.vy*0.2},'#87CEEB',0.8);
-      // 动画弧度
-      if(prog<0.35)this.drawY=-this.size*(prog/0.35)*0.9;
-      else this.drawY=-this.size*0.9*(1-(prog-0.35)/0.65);
-      // 到达锁定位置
-      if(dist<this.size*1.2||this.diveTimer<=0){
-        // 检查目标是否在附近
-        const hit=this.diveTarget&&!this.diveTarget.dead&&Math.hypot(this.diveTarget.x-this.x,this.diveTarget.y-this.y)<this.size+this.diveTarget.size+10;
-        if(!hit){
-          // 扑空
-          this.stunned=true;this.stunTimer=1500;this.stunImmune=STUN_IMMUN;
-          const sk=this.skills.find(s=>s.type==='dive');
-          if(sk)sk.cdTimer=sk.cd*2;
-          spawnFX('text',this.x,this.y-20,'扑空!','#ff6b6b');
-          triggerShake(3,150);
+      if(!diveAborted){
+        // 飞向锁定位置（不跟踪目标）
+        const dx=this.diveLockX-this.x,dy=this.diveLockY-this.y,dist=Math.hypot(dx,dy)||1;
+        const spd=this.speed*this.diveSkill.diveSpeed*(0.5+prog*0.5);
+        this.vx+=(dx/dist)*spd*0.25;this.vy+=(dy/dist)*spd*0.25;
+        const mag=Math.hypot(this.vx,this.vy);
+        if(mag>spd){this.vx=this.vx/mag*spd;this.vy=this.vy/mag*spd;}
+        // 俯冲轨迹拖尾
+        if(Math.random()<0.7)spawnFX('trail',this.x-this.vx*0.1,this.y-this.vy*0.1,{emoji:'💨',life:300,vx:-this.vx*0.2,vy:-this.vy*0.2},'#87CEEB',0.8);
+        // 动画弧度
+        if(prog<0.35)this.drawY=-this.size*(prog/0.35)*0.9;
+        else this.drawY=-this.size*0.9*(1-(prog-0.35)/0.65);
+        // 到达锁定位置
+        if(dist<this.size*1.2||this.diveTimer<=0){
+          // 检查目标是否在附近
+          const hit=this.diveTarget&&!this.diveTarget.dead&&Math.hypot(this.diveTarget.x-this.x,this.diveTarget.y-this.y)<this.size+this.diveTarget.size+10;
+          if(!hit){
+            // 扑空
+            this.stunned=true;this.stunTimer=1500;this.stunImmune=STUN_IMMUN;
+            const sk=this.skills.find(s=>s.type==='dive');
+            if(sk)sk.cdTimer=sk.cd*2;
+            spawnFX('text',this.x,this.y-20,'扑空!','#ff6b6b');
+            triggerShake(3,150);
+          }
+          this.diveTimer=0;this.drawY=0;
+          this.diveTarget=null;this.diveSkill=null;
+          if(!this.stunned)this._newDir();
         }
-        this.diveTimer=0;this.drawY=0;
-        this.diveTarget=null;this.diveSkill=null;
-        if(!this.stunned)this._newDir();
       }
     }
 
