@@ -184,7 +184,7 @@ class Animal{
     this.grudgeStacks=0;this.grudgeTimer=0; // 牛
     this.lastHitTimer=3000; // 龟
     this.hibernateCD=0;this.hibernating=false;this.hibernateTimer=0;this.wakeReady=false; // 熊
-    this._chickPhase=cfg._chickPhase||0;this._chickTimer=0; // 鸡成长阶段
+    this._chickPhase=cfg._chickPhase;this._chickTimer=0; // 鸡成长阶段(undefined=非小鸡)
     this._canLay=cfg._canLay||false;
     this._killer=false; // 刚杀了敌人(蛇毒爆用)
   }
@@ -194,7 +194,7 @@ class Animal{
     this.aliveTimer+=rd;
     // 小鸡成长计时
     if(this._chickPhase===0){this._chickTimer+=rd;if(this._chickTimer>=7000)this._growTo(YOUNG_CFG);}
-    else if(this._chickPhase===1){this._chickTimer+=rd;if(this._chickTimer>=7000)this._growTo(Math.random()<0.5?HEN_CFG:ROOSTER_CFG);}
+    else if(this._chickPhase===1){this._chickTimer+=rd;if(this._chickTimer>=7000)this._growTo(Math.random()<0.25?ROOSTER_CFG:HEN_CFG);}
 
     if(this.stunned){this.stunTimer-=rd;if(this.stunTimer<=0)this.stunned=false;if(this.stunned)return;}
     if(this.shieldActive){this.shieldTimer-=rd;if(this.shieldTimer<=0){this.shieldActive=false;this.shieldReduce=0;}}
@@ -252,7 +252,7 @@ class Animal{
     this.x=ox;this.y=oy;this.team=oteam;this.owner=oowner;
     this.skills=(cfg.skills||[]).map(s=>({...s,cdTimer:Math.random()*s.cd*0.3}));
     this.rangedTimer=cfg.ranged?Math.random()*cfg.rangedCD:99999;
-    this._chickPhase=cfg._chickPhase||0;this._chickTimer=0;
+    this._chickPhase=cfg._chickPhase;this._chickTimer=0;
     this._canLay=cfg._canLay||false;
     this.isMinion=cfg.isMinion!==false;
     this.atkTimer=300;this.flashTimer=200;
@@ -460,10 +460,10 @@ class Animal{
 // 阶段2: 🐤雏鸡 HP=5 不可动 6s (实际已破壳,还在原地)
 // 阶段3: 🐥青年鸡前 HP=8 不可动 6s → 孵化出 Chick(phase0)
 const EGG_STAGES=[
-  {emoji:'🥚',name:'蛋',size:8,hp:1,time:10000},
-  {emoji:'🐣',name:'破壳',size:12,hp:1,time:5000},
-  {emoji:'🐤',name:'雏鸡',size:16,hp:5,time:6000},
-  {emoji:'🐥',name:'待出',size:20,hp:8,time:6000}
+  {emoji:'🥚',name:'蛋',size:12,hp:1,time:10000,color:'#fff8e0'},
+  {emoji:'🐣',name:'破壳',size:16,hp:1,time:5000,color:'#fffacd'},
+  {emoji:'🐤',name:'雏鸡',size:20,hp:5,time:6000,color:'#fffde0'},
+  {emoji:'🐥',name:'待出',size:24,hp:8,time:6000,color:'#fff9c4'}
 ];
 
 class Egg{
@@ -508,20 +508,36 @@ class Egg{
 
   draw(ctx){
     if(this.dead)return;
-    const c=this.cur,s=c.size,alpha=0.85;
-    ctx.globalAlpha=alpha;
-    ctx.fillStyle='rgba(0,0,0,0.1)';ctx.beginPath();ctx.ellipse(this.x,this.y+s+1,s*0.45,2,0,0,Math.PI*2);ctx.fill();
-    ctx.font=`${s*1.3}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    const c=this.cur,s=c.size;
+    // 底色大圆(醒目)
+    const bgR=s+6;
+    ctx.fillStyle=c.color;ctx.globalAlpha=0.7;
+    ctx.beginPath();ctx.arc(this.x,this.y,bgR,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(this.x,this.y,bgR,0,Math.PI*2);ctx.stroke();
+    ctx.globalAlpha=1;
+    // 阴影
+    ctx.fillStyle='rgba(0,0,0,0.1)';ctx.beginPath();ctx.ellipse(this.x,this.y+bgR+1,bgR*0.45,2,0,0,Math.PI*2);ctx.fill();
+    // Emoji
+    ctx.font=`${s*1.2}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(c.emoji,this.x,this.y+this.bobOff);
     // 阶段名
-    ctx.font='bold 7px "PingFang SC"';ctx.fillStyle='rgba(255,255,255,0.65)';ctx.fillText(c.name,this.x,this.y-s-7);
-    // 血条
-    const bw=12,bh=1.5,by2=this.y-s-11;
-    ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fillRect(this.x-bw/2,by2,bw,bh);
-    ctx.fillStyle='#ff9966';ctx.fillRect(this.x-bw/2,by2,bw*(this.hp/this.maxHp),bh);
-    // 进度环
-    if(this.stage<3){const p=this.accTime/c.time;ctx.strokeStyle='rgba(255,255,255,0.45)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(this.x,this.y+s+3,s*0.3,-Math.PI/2,-Math.PI/2+p*Math.PI*2);ctx.stroke();}
-    ctx.globalAlpha=1;
+    ctx.font='bold 8px "PingFang SC"';ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillText(c.name,this.x,this.y-bgR-8);
+    // 横条血条(淡橙色)
+    const bbw=s*2.0,bbh=3,bby=this.y+bgR+4;
+    ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fillRect(this.x-bbw/2,bby,bbw,bbh);
+    ctx.fillStyle='#ff8c55';ctx.fillRect(this.x-bbw/2,bby,bbw*(this.hp/this.maxHp),bbh);
+    // 横条进度条(金色,粗)
+    if(this.stage<3){
+      const pbw=s*2.0,pbh=4,pby=bby+5;
+      ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fillRect(this.x-pbw/2,pby,pbw,pbh);
+      const p=this.accTime/c.time;
+      const grad=ctx.createLinearGradient(this.x-pbw/2,0,this.x+pbw/2,0);
+      grad.addColorStop(0,'#ffd700');grad.addColorStop(1,'#ffaa00');
+      ctx.fillStyle=grad;ctx.fillRect(this.x-pbw/2,pby,pbw*p,pbh);
+      ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=1;
+      ctx.strokeRect(this.x-pbw/2,pby,pbw,pbh);
+    }
   }
 }
 
