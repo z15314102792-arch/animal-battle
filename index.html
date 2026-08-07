@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>动物大战 v1.0</title>
+<title>动物大战 v1.1</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:#3a2f28;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:'PingFang SC','Microsoft YaHei',sans-serif;user-select:none;-webkit-user-select:none;padding:3px;touch-action:manipulation}
@@ -45,7 +45,7 @@
     <button class="speed-btn" data-s="3">3x</button>
   </div>
 </div>
-<div class="info">v1.0 · 空格开始 R重置 F随机 1-3调速</div>
+<div class="info">v1.1 · 空格开始 R重置 F随机 1-3调速</div>
 
 <script>
 // ==================== 画布 ====================
@@ -89,78 +89,78 @@ function drawBG(ctx){
   ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.setLineDash([4,12]);ctx.strokeRect(arenaL,arenaT,arenaR-arenaL,arenaB-arenaT);ctx.setLineDash([]);
 }
 
-// ==================== 动物数据 v1.0 ====================
-// 技能动画化 + 鸡成长延长 + 数值平衡
+// ==================== 动物数据 v1.1 ====================
 const ANIMALS={
   chicken:{
-    id:'chicken',name:'母鸡',emoji:'🐔',
-    hp:120,speed:0.40,damage:4,size:48,
-    color:'#f4a460',desc:'远程撒米🍚(25%打偏)·下蛋→滚雪球',
+    id:'chicken',name:'母鸡',emoji:'🐔',bodyType:'bird',
+    hp:120,speed:0.40,damage:4,size:48,color:'#f4a460',bodyColor:'#e8c888',
+    desc:'远程撒米🍚(25%打偏)·下蛋→滚雪球',
     ranged:true,rangedDmg:7,rangedCD:2600,rangedRange:160,rangedEmoji:'🍚',rangedSpeed:4.5,rangedMiss:0.25,
-    skills:[{name:'下蛋',emoji:'🥚',cd:24000,type:'lay_egg',desc:'下蛋→孵化→新生命'}]
+    skills:[{name:'下蛋',emoji:'🥚',cd:28000,type:'lay_egg',desc:'下蛋→孵化→新生命'}]
   },
   bear:{
-    id:'bear',name:'棕熊',emoji:'🐻',
-    hp:255,speed:0.34,damage:16,size:67,color:'#8B7355',
+    id:'bear',name:'棕熊',emoji:'🐻',bodyType:'quad',
+    hp:255,speed:0.34,damage:16,size:67,color:'#8B7355',bodyColor:'#7a5f40',
     passives:[{type:'rage',threshold:0.3,dmgBonus:0.5,desc:'HP<30%伤害+50%'},{type:'hibernate',interval:14000,pause:1500,wakeDmg:0.8,desc:'偶尔冬眠→醒来重击'}],
-    skills:[{name:'眩晕拍击',emoji:'💫',cd:8500,type:'stun',duration:1500,windup:900,desc:'蓄力→拍晕1.5秒'}]
+    skills:[{name:'眩晕拍击',emoji:'💫',cd:9000,type:'stun',duration:1500,windup:900,desc:'蓄力→拍晕1.5秒(自身减伤55%)'}]
   },
   wolf:{
-    id:'wolf',name:'狼',emoji:'🐺',
-    hp:145,speed:0.72,damage:9,size:51,color:'#a0a0a0',
+    id:'wolf',name:'狼',emoji:'🐺',bodyType:'quad',
+    hp:145,speed:0.72,damage:9,size:51,color:'#a0a0a0',bodyColor:'#808080',
     passives:[{type:'loneWolf',radius:71,dmgBonus:0.25,desc:'无同伴时伤害+25%'}],
     skills:[{name:'流血撕咬',emoji:'🩸',cd:5000,type:'bleed',damage:6,duration:3500,tickInterval:700,desc:'命中后流血3.5秒'}]
   },
   bull:{
-    id:'bull',name:'公牛',emoji:'🐂',
-    hp:235,speed:0.46,damage:11,size:61,color:'#c4a882',
+    id:'bull',name:'公牛',emoji:'🐂',bodyType:'quad',
+    hp:235,speed:0.42,damage:11,size:61,color:'#c4a882',bodyColor:'#a08860',
     passives:[{type:'grudge',maxStacks:5,dmgPerStack:0.1,decay:5000,desc:'每挨打伤害+10%(最高+50%)'}],
-    skills:[{name:'冲锋',emoji:'💨',cd:6500,type:'charge',damage:22,knockback:15,trail:true,desc:'猛冲22伤+击退+扬尘'}]
+    skills:[{name:'冲撞',emoji:'💨',cd:6500,type:'hop',damage:22,hopDist:75,desc:'跳步75px→下次攻击+22伤'}]
   },
   eagle:{
-    id:'eagle',name:'鹰',emoji:'🦅',
-    hp:115,speed:0.72,damage:15,size:48,color:'#f5f5f5',
+    id:'eagle',name:'鹰',emoji:'🦅',bodyType:'bird',
+    hp:115,speed:0.72,damage:15,size:48,color:'#e8dcc8',bodyColor:'#c8b898',
     passives:[{type:'dodge',chance:0.18,desc:'18%闪避近战攻击'}],
-    skills:[{name:'俯冲暴击',emoji:'⚡',cd:5500,type:'dive',multiplier:3.0,diveSpeed:240,diveTime:900,desc:'升空→俯冲→3倍暴击'}]
+    skills:[{name:'俯冲暴击',emoji:'⚡',cd:5500,type:'dive',multiplier:3.0,lockRange:200,diveSpeed:260,diveTime:900,desc:'锁定200px→俯冲3倍暴击·逃脱则自晕'}]
   },
   snake:{
-    id:'snake',name:'蛇',emoji:'🐍',
-    hp:135,speed:0.56,damage:6,size:45,color:'#5dade2',
+    id:'snake',name:'蛇',emoji:'🐍',bodyType:'snake',
+    hp:135,speed:0.56,damage:6,size:45,color:'#5dade2',bodyColor:'#3d8d52',
     passives:[{type:'contagion',radius:54,spreadDmg:4,duration:3000,desc:'击杀→毒溅射周围敌人'}],
     skills:[{name:'毒液',emoji:'🧪',cd:4200,type:'poison',damage:5,duration:4500,tickInterval:900,poisonCloud:true,desc:'命中后中毒4.5秒+毒雾'}]
   },
   lion:{
-    id:'lion',name:'狮子',emoji:'🦁',
-    hp:195,speed:0.50,damage:14,size:61,color:'#e8a87c',
+    id:'lion',name:'狮子',emoji:'🦁',bodyType:'quad',
+    hp:195,speed:0.50,damage:14,size:61,color:'#e8a87c',bodyColor:'#c89060',
     passives:[{type:'intimidate',radius:70,fleeChance:0.06,desc:'周围敌人6%/秒概率逃跑'}],
-    skills:[{name:'咆哮',emoji:'🦁',cd:6500,type:'roar',weakenPct:0.35,duration:4000,ringRadius:120,desc:'咆哮降敌35%攻击4秒+音波'}]
+    skills:[{name:'咆哮',emoji:'🦁',cd:6500,type:'roar',weakenPct:0.35,duration:4000,ringRadius:130,desc:'咆哮降敌35%攻击4秒+全体音波'}]
   },
   elephant:{
-    id:'elephant',name:'大象',emoji:'🐘',
-    hp:360,speed:0.30,damage:15,size:77,color:'#b0a090',
+    id:'elephant',name:'大象',emoji:'🐘',bodyType:'quad',
+    hp:360,speed:0.30,damage:15,size:77,color:'#b0a090',bodyColor:'#908070',
     passives:[{type:'unstoppable',desc:'免疫眩晕'},{type:'trample',radius:85,dps:0.8,desc:'碾压贴身小型敌人'}],
-    skills:[{name:'地动山摇',emoji:'🌍',cd:9500,type:'quake',damage:12,stunDuration:1800,shakeIntensity:8,shakeTime:400,desc:'AOE12伤+眩晕+画面震动'}]
+    skills:[{name:'地动山摇',emoji:'🌍',cd:9500,type:'quake',damage:12,stunDuration:1800,quakeRange:180,shakeIntensity:12,shakeTime:500,desc:'范围180px·AOE12伤+眩晕+震动'}]
   },
   turtle:{
-    id:'turtle',name:'乌龟',emoji:'🐢',
-    hp:180,speed:0.30,damage:6,size:48,color:'#6b8e6b',
+    id:'turtle',name:'乌龟',emoji:'🐢',bodyType:'turtle',
+    hp:180,speed:0.30,damage:6,size:48,color:'#6b8e6b',bodyColor:'#5a7a4a',
     passives:[{type:'regeneration',delay:3000,hpPerSec:2.5,desc:'3秒不受击后回血2.5/秒'}],
     skills:[{name:'缩壳',emoji:'🐢',cd:7500,type:'shield',reducePct:0.7,duration:3500,desc:'减伤70%持续3.5秒'}]
   }
 };
 
-// ==================== 小鸡/公鸡配置(v1.0: 成长时间延长) ====================
-const CHICK_CFG={name:'小鸡',emoji:'🐤',hp:15,speed:0.28,damage:0,size:26,color:'#f4c460',isMinion:true,ranged:false,_chickPhase:0};
-const YOUNG_CFG={name:'青年鸡',emoji:'🐥',hp:24,speed:0.32,damage:0,size:32,color:'#f4c460',isMinion:true,ranged:true,rangedDmg:4,rangedCD:3200,rangedRange:130,rangedEmoji:'🍚',rangedSpeed:4,rangedMiss:0.40,_chickPhase:1};
-const HEN_CFG={name:'母鸡',emoji:'🐔',hp:36,speed:0.36,damage:2,size:38,color:'#f4a460',isMinion:true,ranged:true,rangedDmg:6,rangedCD:3000,rangedRange:150,rangedEmoji:'🍚',rangedSpeed:4.2,rangedMiss:0.25,_chickPhase:2,_canLay:true,skills:[{name:'下蛋',emoji:'🥚',cd:30000,type:'lay_egg',desc:'下蛋→孵化→新生命'}]};
-const ROOSTER_CFG={name:'公鸡',emoji:'🐓',hp:57,speed:0.42,damage:8,size:42,color:'#d4745c',isMinion:true,ranged:false,_chickPhase:2};
+// ==================== 小鸡/公鸡配置(v1.1) ====================
+const CHICK_CFG={name:'小鸡',emoji:'🐤',bodyType:'bird',hp:15,speed:0.28,damage:0,size:26,color:'#f4c460',bodyColor:'#e8b840',isMinion:true,ranged:false,_chickPhase:0};
+const YOUNG_CFG={name:'青年鸡',emoji:'🐥',bodyType:'bird',hp:24,speed:0.32,damage:0,size:32,color:'#f4c460',bodyColor:'#e8b840',isMinion:true,ranged:true,rangedDmg:4,rangedCD:3200,rangedRange:130,rangedEmoji:'🍚',rangedSpeed:4,rangedMiss:0.40,_chickPhase:1};
+const HEN_CFG={name:'母鸡',emoji:'🐔',bodyType:'bird',hp:36,speed:0.36,damage:2,size:38,color:'#f4a460',bodyColor:'#e8c888',isMinion:true,ranged:true,rangedDmg:6,rangedCD:3000,rangedRange:150,rangedEmoji:'🍚',rangedSpeed:4.2,rangedMiss:0.25,_chickPhase:2,_canLay:true,skills:[{name:'下蛋',emoji:'🥚',cd:30000,type:'lay_egg',desc:'下蛋→孵化→新生命'}]};
+const ROOSTER_CFG={name:'公鸡',emoji:'🐓',bodyType:'bird',hp:57,speed:0.42,damage:8,size:42,color:'#d4745c',bodyColor:'#b05040',isMinion:true,ranged:false,_chickPhase:2};
 
 // ==================== 状态 ====================
 let gameSpeed=2,animals=[],eggs=[],effects=[],gameState='idle',winner=null,lastTime=0,frameId=null;
 let shakeX=0,shakeY=0,shakeIntensity=0,shakeTimer=0,shakeMax=0;
+let groundCracks=[]; // v1.1: 地面裂缝
 
 function triggerShake(intensity,duration){
-  shakeIntensity=intensity;shakeMax=duration;shakeTimer=duration;
+  shakeIntensity=Math.max(shakeIntensity,intensity);shakeMax=Math.max(shakeMax,duration);shakeTimer=Math.max(shakeTimer,duration);
 }
 
 // ==================== 常量 ====================
@@ -180,7 +180,7 @@ class Animal{
     this.rangedTimer=cfg.ranged?Math.random()*cfg.rangedCD:99999;
     this.dotEffects=[];this.shieldActive=false;this.shieldTimer=0;this.shieldReduce=0;
     this.weakenPct=0;this.weakenTimer=0;
-    this.critNext=false;this.stunNext=false;this.bleedNext=false;this.poisonNext=false;this.chargeReady=false;
+    this.critNext=false;this.stunNext=false;this.bleedNext=false;this.poisonNext=false;
     this.slowed=false;this.slowPct=0;this.slowTimer=0;
     this.passives=cfg.passives||[];
     this.followOffsetX=(Math.random()-0.5)*this.size*0.6;this.followOffsetY=(Math.random()-0.5)*this.size*0.4+this.size*0.4;
@@ -194,20 +194,21 @@ class Animal{
     }
     this._chickPhase=cfg._chickPhase;this._chickTimer=0;
     this._canLay=cfg._canLay||false;
-    this._killer=false;
     this.recoilTimer=0;this.stunImmune=0;
-    // v1.0 动画状态
-    this.windupTimer=0;this.windupMax=0;       // 熊举掌蓄力
-    this.diveTimer=0;this.diveMax=0;this.diveTarget=null;this.diveSkill=null; // 鹰俯冲
-    this.drawY=0; // 鹰升空时绘制偏移
+    // v1.1 动画状态
+    this.windupTimer=0;this.windupMax=0;
+    this.diveTimer=0;this.diveMax=0;this.diveTarget=null;this.diveSkill=null;this.diveLockX=0;this.diveLockY=0;
+    this.drawY=0;this.scaleBob=0;
+    // v1.1 牛跳步
+    this.hopTimer=0;this.hopActive=false;
   }
 
   update(dt){
     if(this.dead)return;const rd=dt;
     this.aliveTimer+=rd;
-    // v1.0: 成长时间延长 小鸡→青年 10s, 青年→成年 12s
     if(this._chickPhase===0){this._chickTimer+=rd;if(this._chickTimer>=10000)this._growTo(YOUNG_CFG);}
     else if(this._chickPhase===1){this._chickTimer+=rd;if(this._chickTimer>=12000)this._growTo(Math.random()<0.25?ROOSTER_CFG:HEN_CFG);}
+    this.scaleBob=Math.sin(this.aliveTimer/600)*0.03; // 呼吸微动
 
     if(this.stunned){this.stunTimer-=rd;if(this.stunTimer<=0)this.stunned=false;if(this.stunned)return;}
     if(this.shieldActive){this.shieldTimer-=rd;if(this.shieldTimer<=0){this.shieldActive=false;this.shieldReduce=0;}}
@@ -227,7 +228,7 @@ class Animal{
         if(this.hibernateCD>0){this.hibernateCD-=rd;}else{this.hibernating=true;this.hibernateTimer=h.pause;this.hibernateCD=h.interval*(0.7+Math.random()*0.6);spawnFX('text',this.x,this.y-22,'冬眠💤','#aaa');}
       }else{
         this.hibernateTimer-=rd;
-        if(this.hibernateTimer<=0){this.hibernating=false;this.wakeReady=true;this._newDir();spawnFX('text',this.x,this.y-22,'醒来!','#ff6b6b');}
+        if(this.hibernateTimer<=0){this.hibernating=false;this.wakeReady=true;this._newDir();spawnFX('text',this.x,this.y-22,'醒来!','#ff6b6b');triggerShake(3,200);}
       }
     }
     if(this.grudgeStacks>0){this.grudgeTimer-=rd;if(this.grudgeTimer<=0){this.grudgeStacks=0;}}
@@ -243,29 +244,65 @@ class Animal{
     if(this.windupTimer>0){
       this.windupTimer-=rd;
       const prog=1-this.windupTimer/this.windupMax;
-      if(Math.random()<0.3)spawnFX('trail',this.x+(Math.random()-0.5)*this.size,this.y-this.size-10,{emoji:'🐾',life:400,vx:0,vy:-10},'#8B7355',prog);
-      if(this.windupTimer<=0){this.stunNext=true;spawnFX('text',this.x,this.y-24,'拍击!','#ff6b6b');triggerShake(6,300);}
+      this.scaleBob=prog*0.12; // 身体微胀
+      if(Math.random()<0.4)spawnFX('trail',this.x+(Math.random()-0.5)*this.size*0.6,this.y-this.size*0.8,{emoji:'🐾',life:500,vx:(Math.random()-0.5)*8,vy:-15-Math.random()*10},'#8B7355',1+prog);
+      if(this.windupTimer<=0){this.stunNext=true;spawnFX('text',this.x,this.y-24,'拍击!','#ff6b6b');triggerShake(10,400);}
     }
 
-    // 鹰俯冲动画
+    // 鹰俯冲动画 v1.1: 锁定位置俯冲，目标逃脱→自晕
     if(this.diveTimer>0){
       this.diveTimer-=rd;
       const prog=1-this.diveTimer/this.diveMax;
-      if(this.diveTarget&&!this.diveTarget.dead){
-        const t=this.diveTarget;
-        const dx=t.x-this.x,dy=t.y-this.y,dist=Math.hypot(dx,dy)||1;
-        const spd=this.speed*this.diveSkill.diveSpeed*(0.6+prog*0.4); // 越冲越快
-        this.vx+=(dx/dist)*spd*0.2;this.vy+=(dy/dist)*spd*0.2;
-        const mag=Math.hypot(this.vx,this.vy);
-        if(mag>spd){this.vx=this.vx/mag*spd;this.vy=this.vy/mag*spd;}
-        // 升空→俯冲的Y偏移: 前半段上升，后半段下降
-        if(prog<0.4)this.drawY=-this.size*(prog/0.4)*0.8;
-        else this.drawY=-this.size*0.8*(1-(prog-0.4)/0.6);
+      // 检查目标是否逃出锁定范围
+      if(this.diveTarget&&!this.diveTarget.dead&&prog>0.3){
+        const escDist=Math.hypot(this.diveTarget.x-this.diveLockX,this.diveTarget.y-this.diveLockY);
+        if(escDist>this.diveSkill.lockRange*0.6){
+          // 目标逃脱! 自晕+双倍CD
+          this.diveTimer=0;this.drawY=0;
+          const sk=this.skills.find(s=>s.type==='dive');
+          if(sk)sk.cdTimer=sk.cd*2;
+          this.stunned=true;this.stunTimer=1500;this.stunImmune=STUN_IMMUN;
+          spawnFX('text',this.x,this.y-20,'扑空!','#ff6b6b');
+          for(let i=0;i<8;i++)spawnFX('trail',this.x,this.y,{emoji:'💢',life:500,vx:(Math.random()-0.5)*40,vy:(Math.random()-0.5)*30-10},'#ff6b6b',0.8);
+          this.diveTarget=null;this.diveSkill=null;continue;
+        }
       }
-      // 俯冲期间碰撞即3倍暴击
-      if(this.diveTimer<=0||(this.diveTarget&&this.diveTarget.dead)){
-        this.diveTimer=0;this.diveTarget=null;this.diveSkill=null;this.drawY=0;
-        if(!this.diveTarget||!this.diveTarget.dead)this._newDir();
+      // 飞向锁定位置（不跟踪目标）
+      const dx=this.diveLockX-this.x,dy=this.diveLockY-this.y,dist=Math.hypot(dx,dy)||1;
+      const spd=this.speed*this.diveSkill.diveSpeed*(0.5+prog*0.5);
+      this.vx+=(dx/dist)*spd*0.25;this.vy+=(dy/dist)*spd*0.25;
+      const mag=Math.hypot(this.vx,this.vy);
+      if(mag>spd){this.vx=this.vx/mag*spd;this.vy=this.vy/mag*spd;}
+      // 俯冲轨迹拖尾
+      if(Math.random()<0.7)spawnFX('trail',this.x-this.vx*0.1,this.y-this.vy*0.1,{emoji:'💨',life:300,vx:-this.vx*0.2,vy:-this.vy*0.2},'#87CEEB',0.8);
+      // 动画弧度
+      if(prog<0.35)this.drawY=-this.size*(prog/0.35)*0.9;
+      else this.drawY=-this.size*0.9*(1-(prog-0.35)/0.65);
+      // 到达锁定位置
+      if(dist<this.size*1.2||this.diveTimer<=0){
+        // 检查目标是否在附近
+        const hit=this.diveTarget&&!this.diveTarget.dead&&Math.hypot(this.diveTarget.x-this.x,this.diveTarget.y-this.y)<this.size+this.diveTarget.size+10;
+        if(!hit){
+          // 扑空
+          this.stunned=true;this.stunTimer=1500;this.stunImmune=STUN_IMMUN;
+          const sk=this.skills.find(s=>s.type==='dive');
+          if(sk)sk.cdTimer=sk.cd*2;
+          spawnFX('text',this.x,this.y-20,'扑空!','#ff6b6b');
+          triggerShake(3,150);
+        }
+        this.diveTimer=0;this.drawY=0;
+        this.diveTarget=null;this.diveSkill=null;
+        if(!this.stunned)this._newDir();
+      }
+    }
+
+    // v1.1 牛跳步计时
+    if(this.hopTimer>0){
+      this.hopTimer-=rd;
+      if(this.hopTimer<=0){
+        // 跳步结束，快速减速
+        this.vx*=0.25;this.vy*=0.25;
+        this.hopActive=false;
       }
     }
 
@@ -276,7 +313,7 @@ class Animal{
     let spdMult=1;if(this.slowed)spdMult*=(1-this.slowPct);
     const curSpd=Math.sqrt(this.vx*this.vx+this.vy*this.vy)||1;
     const maxSpd=this.speed*60*spdMult;
-    if(curSpd>maxSpd&&this.diveTimer<=0){this.vx=this.vx/curSpd*maxSpd;this.vy=this.vy/curSpd*maxSpd;}
+    if(curSpd>maxSpd&&this.diveTimer<=0&&!this.hopActive){this.vx=this.vx/curSpd*maxSpd;this.vy=this.vy/curSpd*maxSpd;}
     this.x+=this.vx*rd/1000;this.y+=this.vy*rd/1000;
     this._clampToArena();
   }
@@ -291,7 +328,7 @@ class Animal{
     this._chickPhase=cfg._chickPhase;this._chickTimer=0;
     this._canLay=cfg._canLay||false;
     this.isMinion=cfg.isMinion!==false;
-    this.atkTimer=300;this.flashTimer=200;
+    this.atkTimer=300;this.flashTimer=200;this.drawY=0;
     spawnFX('text',this.x,this.y-20,cfg.name+'!','#ffd700');
   }
 
@@ -321,6 +358,8 @@ class Animal{
 
   effDmg(){
     let d=this.damage;
+    // v1.1: 熊眩晕击的伤害减成（用控制换伤害）
+    if(this.stunNext)d=Math.round(d*0.45);
     if(this.weakenPct>0)d*=(1-this.weakenPct);
     const rage=this.passives.find(p=>p.type==='rage');
     if(rage&&this.hp/this.maxHp<rage.threshold)d*=(1+rage.dmgBonus);
@@ -328,7 +367,10 @@ class Animal{
     if(this.grudgeStacks>0){const gr=this.passives.find(p=>p.type==='grudge');d*=(1+this.grudgeStacks*(gr?.dmgPerStack||0.1));}
     const lw=this.passives.find(p=>p.type==='loneWolf');
     if(lw){const nearby=animals.filter(a=>a.team===this.team&&!a.dead&&a!==this&&Math.hypot(a.x-this.x,a.y-this.y)<lw.radius);if(nearby.length===0)d*=(1+lw.dmgBonus);}
-    if(this.diveTimer>0){d*=this.diveSkill?.multiplier||3.0;}
+    // v1.1: 俯冲暴击倍率
+    if(this.diveTimer>0)d*=this.diveSkill?.multiplier||3.0;
+    // v1.1: 跳步攻击加成
+    if(this.hopActive)d*=1.8;
     if(this.critNext){d*=this.skills.find(s=>s.type==='crit')?.multiplier||2;this.critNext=false;}
     else if(Math.random()<BASE_CRIT){d*=2;this._baseCrit=true;}
     else this._baseCrit=false;
@@ -351,8 +393,7 @@ class Animal{
       nearby.forEach(a=>{
         a.dotEffects.push({dmg:cont.spreadDmg,dur:cont.duration,tick:1000,elapsed:0,tickAcc:0});
         spawnFX('text',a.x,a.y-20,'毒爆!','#8e44ad');
-        // 毒雾粒子
-        for(let i=0;i<5;i++)spawnFX('trail',a.x+(Math.random()-0.5)*20,a.y+(Math.random()-0.5)*20,{emoji:'🟢',life:500,vx:(Math.random()-0.5)*20,vy:(Math.random()-0.5)*20-15},'#8e44ad',0.6);
+        for(let i=0;i<8;i++)spawnFX('trail',a.x+(Math.random()-0.5)*20,a.y+(Math.random()-0.5)*20,{emoji:'☠️',life:600,vx:(Math.random()-0.5)*30,vy:(Math.random()-0.5)*25-20},'#8e44ad',0.6);
       });
     }
   }
@@ -362,38 +403,44 @@ class Animal{
       const dodge=target.passives.find(p=>p.type==='dodge');
       if(Math.random()<dodge.chance){spawnFX('text',target.x,target.y-20,'闪避!','#87CEEB');return;}
     }
-    const willStun=this.stunNext,willBleed=this.bleedNext,willPoison=this.poisonNext,isCharge=this.chargeReady;
+    const willStun=this.stunNext,willBleed=this.bleedNext,willPoison=this.poisonNext;
     let dmg=this.effDmg();
     if(target.shieldActive)dmg=Math.round(dmg*(1-target.shieldReduce));
     if(target.shieldActive){const refl=0.25;const rdmg=Math.round(dmg*refl);this.hp-=rdmg;this.flashTimer=100;spawnFX('damage',this.x,this.y-16,rdmg,'#6b8e6b');if(this.hp<=0){this.hp=0;this.dead=true;}}
     const tUnstop=target.passives.some(p=>p.type==='unstoppable');
-    if(willStun&&!tUnstop&&target.stunImmune<=0){target.stunned=true;target.stunTimer=this.skills.find(s=>s.type==='stun')?.duration||1500;target.stunImmune=STUN_IMMUN;spawnFX('text',target.x,target.y-24,'眩晕!','#ffd700');}
+    if(willStun&&!tUnstop&&target.stunImmune<=0){
+      target.stunned=true;target.stunTimer=this.skills.find(s=>s.type==='stun')?.duration||1500;target.stunImmune=STUN_IMMUN;
+      spawnFX('text',target.x,target.y-24,'眩晕!','#ffd700');
+      triggerShake(8,300);
+    }
     else if(willStun&&tUnstop){spawnFX('text',target.x,target.y-24,'免疫!','#b0a090');this.stunNext=false;}
     else if(willStun&&target.stunImmune>0){spawnFX('text',target.x,target.y-24,'抵抗!','#aaa');this.stunNext=false;}
     this.stunNext=false;
     if(willBleed){
       target.dotEffects.push({dmg:this.skills.find(s=>s.type==='bleed')?.damage||6,dur:this.skills.find(s=>s.type==='bleed')?.duration||3500,tick:this.skills.find(s=>s.type==='bleed')?.tickInterval||700,elapsed:0,tickAcc:0});
       spawnFX('text',target.x,target.y-24,'流血!','#e74c3c');
-      // 血滴溅射
-      for(let i=0;i<6;i++)spawnFX('trail',target.x,target.y,{emoji:'🩸',life:400,vx:(Math.random()-0.5)*50,vy:(Math.random()-0.5)*40-20},'#e74c3c',0.7);
+      for(let i=0;i<10;i++)spawnFX('trail',target.x,target.y,{emoji:'🩸',life:450,vx:(Math.random()-0.5)*60,vy:(Math.random()-0.5)*50-25},'#e74c3c',0.8);
     }
     this.bleedNext=false;
     if(willPoison){
       target.dotEffects.push({dmg:this.skills.find(s=>s.type==='poison')?.damage||5,dur:this.skills.find(s=>s.type==='poison')?.duration||4500,tick:this.skills.find(s=>s.type==='poison')?.tickInterval||900,elapsed:0,tickAcc:0});
       spawnFX('text',target.x,target.y-24,'中毒!','#8e44ad');
-      // 毒雾粒子
       if(this.skills.find(s=>s.type==='poison')?.poisonCloud){
-        for(let i=0;i<8;i++)spawnFX('trail',target.x+(Math.random()-0.5)*30,target.y+(Math.random()-0.5)*30,{emoji:'☠️',life:600,vx:(Math.random()-0.5)*30,vy:(Math.random()-0.5)*25-20},'#8e44ad',0.5);
+        for(let i=0;i<14;i++)spawnFX('trail',target.x+(Math.random()-0.5)*35,target.y+(Math.random()-0.5)*35,{emoji:'☠️',life:700,vx:(Math.random()-0.5)*25,vy:(Math.random()-0.5)*25-15},'#8e44ad',0.5);
       }
     }
     this.poisonNext=false;
     target.hp-=dmg;target.flashTimer=100;target.onHit();target.atkTimer=Math.min(target.atkTimer,150);
     const dx=target.x-this.x,dy=target.y-this.y,dist=Math.sqrt(dx*dx+dy*dy)||1;
-    const kb=isCharge?(this.skills.find(s=>s.type==='charge')?.knockback||12):KB;
+    const kb=KB;
     target.vx+=(dx/dist)*kb*18;target.vy+=(dy/dist)*kb*12;
-    this.chargeReady=false;
-    const wasDive=this.diveTimer>0; // v1.0: 保存俯冲状态（下面会重置）
-    if(wasDive){spawnFX('text',target.x,target.y-30,'俯冲!','#ffd700');triggerShake(5,250);this.diveTimer=0;this.drawY=0;this._newDir();}
+    // v1.1 跳步攻击命中
+    if(this.hopActive){this.hopActive=false;spawnFX('text',target.x,target.y-30,'撞击!','#cd853f');triggerShake(5,250);}
+    // v1.1 俯冲命中
+    const wasDive=this.diveTimer>0;
+    if(wasDive){spawnFX('text',target.x,target.y-30,'俯冲!','#ffd700');triggerShake(10,400);this.diveTimer=0;this.drawY=0;this._newDir();
+      for(let i=0;i<12;i++)spawnFX('trail',target.x,target.y,{emoji:'💥',life:400,vx:(Math.random()-0.5)*50,vy:(Math.random()-0.5)*40-15},'#ffd700',0.7);
+    }
     spawnFX('damage',target.x,target.y-16,dmg,this._baseCrit||wasDive?'#ff6b6b':'#fff',this._baseCrit||wasDive?1.3:1);
     if(this._baseCrit)spawnFX('text',target.x,target.y-30,'暴击!','#ffd700');
     if(target.hp<=0){target.hp=0;target.dead=true;this.onKill();}
@@ -405,7 +452,6 @@ class Animal{
     const t=enemies.length>0?enemies[0]:null;
     switch(skill.type){
       case'stun':
-        // v1.0: 熊举掌蓄力动画
         if(skill.windup){
           this.windupTimer=skill.windup;this.windupMax=skill.windup;
           spawnFX('text',this.x,this.y-20,'蓄力...','#ff6b6b');
@@ -415,30 +461,49 @@ class Animal{
       case'poison':this.poisonNext=true;spawnFX('text',this.x,this.y-20,skill.name+'!','#8e44ad');break;
       case'crit':this.critNext=true;spawnFX('text',this.x,this.y-20,skill.name+'!','#ffd700');break;
       case'dive':
-        // v1.0: 鹰俯冲动画
+        // v1.1: 锁定位置200px→目标逃脱则自晕+双倍CD
         if(t&&!t.dead){
+          const ld=Math.hypot(t.x-this.x,t.y-this.y);
+          if(ld>skill.lockRange){skill.cdTimer=skill.cd;spawnFX('text',this.x,this.y-20,'太远!','#999');break;}
           this.diveTimer=skill.diveTime;this.diveMax=skill.diveTime;
           this.diveTarget=t;this.diveSkill=skill;
-          spawnFX('text',this.x,this.y-20,'升空!','#87CEEB');
+          this.diveLockX=t.x;this.diveLockY=t.y;
+          spawnFX('text',this.x,this.y-20,'锁定!','#87CEEB');
+          // 锁定十字准星特效
+          spawnFX('ring',t.x,t.y,{maxRadius:24,color:'#87CEEB',life:900},'#87CEEB');
         }
         break;
-      case'charge':
-        this.chargeReady=true;
-        if(t){const dx=t.x-this.x,dy=t.y-this.y,dist=Math.sqrt(dx*dx+dy*dy)||1;this.vx=(dx/dist)*this.speed*220;this.vy=(dy/dist)*this.speed*160;}
+      case'hop':
+        // v1.1: 短跳步75px→敌方向，非追击
+        if(t){
+          const dx=t.x-this.x,dy=t.y-this.y,dist=Math.hypot(dx,dy)||1;
+          this.vx=(dx/dist)*this.speed*130;this.vy=(dy/dist)*this.speed*110;
+          this.hopTimer=350;this.hopActive=true;
+          // 扬尘
+          for(let i=0;i<6;i++)spawnFX('trail',this.x,this.y+this.size*0.3,{emoji:'💨',life:500,vx:(Math.random()-0.5)*20,vy:5+Math.random()*10},'#c4a882',0.6);
+        }
         spawnFX('text',this.x,this.y-20,skill.name+'!','#cd853f');
         break;
       case'roar':
-        // v1.0: 咆哮扩散音波环
         if(t){t.weakenPct=skill.weakenPct;t.weakenTimer=skill.duration;spawnFX('text',t.x,t.y-20,'攻击↓','#8e44ad');}
-        if(skill.ringRadius)spawnFX('ring',this.x,this.y,{maxRadius:skill.ringRadius,color:'#e8a87c',life:600},'#e8a87c');
+        if(skill.ringRadius){
+          for(let i=0;i<3;i++)setTimeout(()=>{if(gameState==='fighting')spawnFX('ring',this.x,this.y,{maxRadius:skill.ringRadius*(0.4+i*0.3),color:'#e8a87c',life:500+i*150},'#e8a87c');},i*150);
+        }
         spawnFX('text',this.x,this.y-20,'咆哮!','#e8a87c');
-        // 对其他敌人也削弱
+        triggerShake(5,250);
         enemies.forEach(e=>{if(e!==t&&!e.dead){e.weakenPct=skill.weakenPct*0.6;e.weakenTimer=skill.duration*0.6;}});
         break;
       case'quake':
-        // v1.0: 画面震动
+        // v1.1: 范围限制180px
         if(skill.shakeIntensity)triggerShake(skill.shakeIntensity,skill.shakeTime);
+        const qr=skill.quakeRange||180;
+        // 地面裂缝
+        for(let i=0;i<5;i++){
+          const a=Math.random()*Math.PI*2,d=qr*(0.2+Math.random()*0.8);
+          groundCracks.push({x:this.x+Math.cos(a)*d,y:this.y+Math.sin(a)*d,life:skill.shakeTime,age:0,len:15+Math.random()*25,angle:Math.random()*Math.PI*2});
+        }
         enemies.forEach(e=>{
+          if(Math.hypot(e.x-this.x,e.y-this.y)>qr)return;
           const dd=skill.damage||0;e.hp-=dd;if(e.hp<=0){e.hp=0;e.dead=true;}e.flashTimer=120;
           const eu=e.passives.some(p=>p.type==='unstoppable');
           if(!eu&&e.stunImmune<=0){e.stunned=true;e.stunTimer=skill.stunDuration;e.stunImmune=STUN_IMMUN;}
@@ -467,57 +532,153 @@ class Animal{
     if(miss)spawnFX('text',this.x,this.y-16,'偏了','#999');
   }
 
+  // ==================== v1.1: 全身绘制 ====================
+  drawBody(ctx,renderY,bScale){
+    const s=this.size,bs=s*bScale;
+    const bx=this.x,by=renderY+s*0.18;
+    const bodyType=this.bodyType||'quad';
+    // 地面阴影
+    ctx.fillStyle='rgba(0,0,0,0.18)';
+    ctx.beginPath();ctx.ellipse(bx,renderY+s*0.42+2,bs*0.45,bs*0.1,0,0,Math.PI*2);ctx.fill();
+
+    if(bodyType==='snake'){
+      // 蛇: 波浪身体
+      const segs=5;
+      ctx.strokeStyle=this.bodyColor||this.color;ctx.lineWidth=bs*0.3;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(bx,renderY-s*0.1);
+      for(let i=1;i<=segs;i++){
+        const t=i/segs,waveX=bx+Math.sin(this.aliveTimer/300+i)*bs*0.15;
+        ctx.lineTo(waveX,renderY-s*0.1+t*s*0.5);
+      }
+      ctx.stroke();
+      ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=bs*0.3+2;
+      ctx.beginPath();ctx.moveTo(bx,renderY-s*0.1);
+      for(let i=1;i<=segs;i++){
+        const t=i/segs,waveX=bx+Math.sin(this.aliveTimer/300+i)*bs*0.15;
+        ctx.lineTo(waveX,renderY-s*0.1+t*s*0.5);
+      }
+      ctx.stroke();
+      ctx.fillStyle=this.bodyColor||this.color;
+      ctx.beginPath();ctx.arc(bx,renderY-s*0.1,bs*0.18,0,Math.PI*2);ctx.fill();
+    }else if(bodyType==='turtle'){
+      // 龟壳: 大椭圆
+      const grad=ctx.createRadialGradient(bx,by,bs*0.1,bx,by,bs*0.5);
+      grad.addColorStop(0,'#8a9a6a');grad.addColorStop(0.7,this.bodyColor||this.color);grad.addColorStop(1,'rgba(0,0,0,0.3)');
+      ctx.fillStyle=grad;ctx.beginPath();ctx.ellipse(bx,by,bs*0.52,bs*0.38,0,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.25)';ctx.lineWidth=2;ctx.stroke();
+      // 壳纹
+      ctx.strokeStyle='rgba(0,0,0,0.12)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(bx-bs*0.2,by);ctx.lineTo(bx+bs*0.2,by);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(bx,by-bs*0.2);ctx.lineTo(bx,by+bs*0.2);ctx.stroke();
+      // 小脚
+      ctx.strokeStyle='rgba(0,0,0,0.25)';ctx.lineWidth=2;
+      for(let lx of[-bs*0.25,bs*0.25]){
+        ctx.beginPath();ctx.moveTo(lx+bx,by+bs*0.2);ctx.lineTo(lx+bx-bs*0.08,by+bs*0.3);ctx.stroke();
+      }
+    }else if(bodyType==='bird'){
+      // 鸟: 椭圆身体 + 翅膀
+      ctx.fillStyle=this.bodyColor||this.color;
+      ctx.beginPath();ctx.ellipse(bx,by,bs*0.38,bs*0.28,0,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1.5;ctx.stroke();
+      // 翅膀
+      const wingFlap=Math.sin(this.aliveTimer/200)*0.25;
+      ctx.fillStyle=this.color;ctx.globalAlpha=0.7;
+      ctx.beginPath();ctx.ellipse(bx-bs*0.3,by-bs*0.05+wingFlap*bs,bs*0.25,bs*0.1,-0.3,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.ellipse(bx+bs*0.3,by-bs*0.05-wingFlap*bs,bs*0.25,bs*0.1,0.3,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha=1;
+      // 脚
+      ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(bx-bs*0.08,by+bs*0.2);ctx.lineTo(bx-bs*0.08,by+bs*0.34);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(bx+bs*0.08,by+bs*0.2);ctx.lineTo(bx+bs*0.08,by+bs*0.34);ctx.stroke();
+    }else{
+      // 四足动物: 椭圆身体
+      const grad=ctx.createLinearGradient(bx,by-bs*0.3,bx,by+bs*0.3);
+      grad.addColorStop(0,this.color);grad.addColorStop(1,this.bodyColor||this.color);
+      ctx.fillStyle=grad;
+      ctx.beginPath();ctx.ellipse(bx,by,bs*0.48,bs*0.32,0,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1.8;ctx.stroke();
+      // 四条腿
+      ctx.strokeStyle='rgba(0,0,0,0.25)';ctx.lineWidth=2.5;ctx.lineCap='round';
+      const legPositions=[-bs*0.22,-bs*0.07,bs*0.07,bs*0.22];
+      legPositions.forEach(lx=>{
+        ctx.beginPath();ctx.moveTo(bx+lx,by+bs*0.22);ctx.lineTo(bx+lx-(lx>0?bs*0.04:-bs*0.04),by+bs*0.36);ctx.stroke();
+      });
+      // 尾巴
+      if(this.bodyType==='quad'&&!this.isMinion){
+        ctx.strokeStyle=this.color;ctx.lineWidth=2.5;ctx.globalAlpha=0.5;
+        ctx.beginPath();ctx.moveTo(bx+bs*0.35,by-bs*0.05);
+        ctx.quadraticCurveTo(bx+bs*0.45,by-bs*0.2,bx+bs*0.35,by-bs*0.25);
+        ctx.stroke();ctx.globalAlpha=1;
+      }
+    }
+  }
+
   draw(ctx){
     if(this.dead)return;
-    const renderY=this.y-this.drawY; // 鹰俯冲时绘制偏移
+    const bScale=1+this.scaleBob+(this.windupTimer>0?(1-this.windupTimer/this.windupMax)*0.1:0);
+    const renderY=this.y-this.drawY;
     if(this.hibernating){ctx.font='12px serif';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText('💤',this.x,renderY-this.size-16);}
     if(this.stunned)for(let i=0;i<3;i++){const a=(Date.now()/300+i*Math.PI*2/3)%(Math.PI*2);ctx.font='11px serif';ctx.fillText('⭐',this.x+Math.cos(a)*(this.size+9)-5,renderY+Math.sin(a)*(this.size+5)-7);}
-    // 龟壳脉冲呼吸动画(v1.0)
+    // 龟壳脉冲
     if(this.shieldActive){
-      const pulse=1+Math.sin(Date.now()/300)*0.12;
-      ctx.strokeStyle='rgba(107,142,107,0.55)';ctx.lineWidth=2.5*pulse;
-      ctx.beginPath();ctx.arc(this.x,renderY,(this.size+7)*pulse,0,Math.PI*2);ctx.stroke();
-      ctx.strokeStyle='rgba(107,142,107,0.25)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(this.x,renderY,(this.size+12)*pulse,0,Math.PI*2);ctx.stroke();
+      const pulse=1+Math.sin(Date.now()/250)*0.15;
+      ctx.strokeStyle='rgba(107,142,107,0.55)';ctx.lineWidth=3*pulse;
+      ctx.beginPath();ctx.arc(this.x,renderY,(this.size+8)*pulse,0,Math.PI*2);ctx.stroke();
+      ctx.strokeStyle='rgba(107,142,107,0.25)';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.arc(this.x,renderY,(this.size+16)*pulse,0,Math.PI*2);ctx.stroke();
     }
-    if(this.critNext){ctx.strokeStyle='rgba(255,215,0,0.45)';ctx.lineWidth=2;ctx.setLineDash([3,3]);ctx.beginPath();ctx.arc(this.x,renderY,this.size+5,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
+    if(this.critNext){ctx.strokeStyle='rgba(255,215,0,0.5)';ctx.lineWidth=2.5;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(this.x,renderY,this.size+6,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
     // 熊蓄力效果
     if(this.windupTimer>0){
       const wp=1-this.windupTimer/this.windupMax;
-      ctx.font=`${15+wp*14}px serif`;ctx.fillStyle='#ff6b6b';ctx.textAlign='center';
-      ctx.fillText('🐾',this.x,renderY-this.size-5-wp*20);
+      ctx.font=`${18+wp*20}px serif`;ctx.fillStyle='#ff6b6b';ctx.textAlign='center';
+      ctx.fillText('🐾',this.x,renderY-this.size*0.7-wp*25);
     }
-    // 俯冲特效
-    if(this.diveTimer>0&&this.diveTimer/this.diveMax<0.6){
-      ctx.strokeStyle='rgba(135,206,235,0.4)';ctx.lineWidth=1.5;ctx.setLineDash([2,4]);
-      ctx.beginPath();ctx.moveTo(this.x,renderY);ctx.lineTo(this.x-this.vx*0.3,renderY-this.vy*0.3);ctx.stroke();ctx.setLineDash([]);
+    // 俯冲速度线
+    if(this.diveTimer>0&&this.diveTimer/this.diveMax<0.65){
+      const spd=Math.hypot(this.vx,this.vy);
+      ctx.strokeStyle='rgba(135,206,235,0.5)';ctx.lineWidth=2;
+      for(let i=0;i<3;i++){
+        const lx=this.x-this.vx/spd*(this.size+10+i*8),ly=renderY-this.vy/spd*(this.size+10+i*8);
+        ctx.beginPath();ctx.moveTo(lx-5,ly);ctx.lineTo(lx+5,ly);ctx.stroke();
+      }
     }
-    if(this.passives.some(p=>p.type==='rage')&&this.hp/this.maxHp<0.3){ctx.strokeStyle='rgba(255,70,40,0.5)';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(this.x,renderY,this.size+6,0,Math.PI*2);ctx.stroke();}
-    // 冲锋蓄力效果
-    if(this.chargeReady){ctx.strokeStyle='rgba(205,133,63,0.5)';ctx.lineWidth=2;ctx.setLineDash([3,3]);ctx.beginPath();ctx.arc(this.x,renderY,this.size+5,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
-    const es=this.isMinion?this.size*0.95:this.size*1.15;
-    ctx.font=`${es}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(this.emoji,this.x,renderY);
-    if(this._chickPhase===0){ctx.font='7px "PingFang SC"';ctx.fillStyle='rgba(255,255,255,0.7)';ctx.fillText('崽',this.x,renderY+this.size+6);}
-    else if(this._chickPhase===1){ctx.font='7px "PingFang SC"';ctx.fillStyle='rgba(255,255,255,0.7)';ctx.fillText('青年',this.x,renderY+this.size+6);}
-    ctx.font=`bold ${this.isMinion?7:9}px "PingFang SC","Microsoft YaHei"`;ctx.fillStyle='#fff';ctx.fillText(this.name,this.x,renderY+this.size+14);
+    if(this.passives.some(p=>p.type==='rage')&&this.hp/this.maxHp<0.3){
+      ctx.strokeStyle='rgba(255,70,40,0.6)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(this.x,renderY,this.size+6,0,Math.PI*2);ctx.stroke();
+    }
+    if(this.hopActive){ctx.strokeStyle='rgba(205,133,63,0.5)';ctx.lineWidth=2;ctx.setLineDash([3,3]);ctx.beginPath();ctx.arc(this.x,renderY,this.size+5,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
+
+    // ---- 全身绘制 ----
+    this.drawBody(ctx,renderY,bScale);
+
+    // 头部(emoji)画在身体上方
+    const headSize=this.size*0.9*bScale;
+    ctx.font=`${headSize}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(this.emoji,this.x,renderY-this.size*0.12);
+    // 名字标签
+    if(this._chickPhase===0){ctx.font='7px "PingFang SC"';ctx.fillStyle='rgba(255,255,255,0.7)';ctx.fillText('崽',this.x,renderY+this.size*0.55);}
+    else if(this._chickPhase===1){ctx.font='7px "PingFang SC"';ctx.fillStyle='rgba(255,255,255,0.7)';ctx.fillText('青年',this.x,renderY+this.size*0.55);}
+    ctx.font=`bold ${this.isMinion?7:9}px "PingFang SC","Microsoft YaHei"`;ctx.fillStyle='#fff';ctx.fillText(this.name,this.x,renderY+this.size*0.65);
+
     // 血条
-    const bw=Math.max(26,this.size*1.0),bh=this.isMinion?2.5:4.5,by=renderY-this.size-11;
+    const bw=Math.max(28,this.size*1.1),bh=this.isMinion?2.5:4.5,by=renderY-this.size*0.55;
     ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(this.x-bw/2,by,bw,bh);
     const hpR=this.hp/this.maxHp;ctx.fillStyle=hpR>0.5?'#5cb85c':hpR>0.25?'#f0ad4e':'#d9534f';ctx.fillRect(this.x-bw/2,by,bw*hpR,bh);
     ctx.font=`bold ${this.isMinion?6.5:8}px "PingFang SC"`;ctx.fillStyle='#fff';
     ctx.fillText(`${Math.ceil(this.hp)}/${this.maxHp}`,this.x,by-2);
     // 状态图标
-    if(this.weakenPct>0){ctx.font='9px serif';ctx.fillStyle='#8e44ad';ctx.fillText('🔻',this.x,renderY-this.size-20);}
-    if(this.slowed){ctx.font='9px serif';ctx.fillStyle='#5dade2';ctx.fillText('🐌',this.x+this.size+3,renderY-5);}
-    if(this.dotEffects.length>0){ctx.font='9px serif';ctx.fillStyle='#e74c3c';ctx.fillText('💔',this.x-this.size-8,renderY-3);}
-    if(this.grudgeStacks>=3){ctx.font='9px serif';ctx.fillStyle='#ff6600';ctx.fillText('💢'.repeat(Math.min(5,this.grudgeStacks)),this.x-this.size-8,renderY+this.size+6);}
+    if(this.weakenPct>0){ctx.font='9px serif';ctx.fillStyle='#8e44ad';ctx.fillText('🔻',this.x,renderY-this.size*0.6);}
+    if(this.slowed){ctx.font='9px serif';ctx.fillStyle='#5dade2';ctx.fillText('🐌',this.x+this.size*0.5,renderY-5);}
+    if(this.dotEffects.length>0){ctx.font='9px serif';ctx.fillStyle='#e74c3c';ctx.fillText('💔',this.x-this.size*0.5,renderY-3);}
+    if(this.grudgeStacks>=3){ctx.font='9px serif';ctx.fillStyle='#ff6600';ctx.fillText('💢'.repeat(Math.min(5,this.grudgeStacks)),this.x-this.size*0.4,renderY+this.size*0.5);}
   }
 }
 
-// ==================== 蛋类 v1.0 (孵化时间延长: 20+10+10=40s) ====================
+// ==================== 蛋类 v1.1 ====================
 const EGG_STAGES=[
-  {emoji:'🥚',name:'蛋',size:19,hp:1,time:20000,color:'#fff8e0'},
-  {emoji:'🐤',name:'雏鸡',size:32,hp:5,time:10000,color:'#fffde0'},
-  {emoji:'🐥',name:'待出',size:38,hp:8,time:10000,color:'#fff9c4'}
+  {emoji:'🥚',name:'蛋',size:19,hp:1,time:22000,color:'#fff8e0'},
+  {emoji:'🐤',name:'雏鸡',size:32,hp:5,time:11000,color:'#fffde0'},
+  {emoji:'🐥',name:'待出',size:38,hp:8,time:11000,color:'#fff9c4'}
 ];
 
 class Egg{
@@ -589,9 +750,9 @@ class Egg{
   }
 }
 
-// ==================== 特效系统 v1.0 (新增 ring/shake/trail) ====================
+// ==================== 特效系统 v1.1 ====================
 function spawnFX(type,x,y,data,color,scale=1){
-  const life=type==='ring'?(data.life||600):type==='trail'?(data.life||400):type==='projectile'?1500:850;
+  const life=type==='ring'?(data.life||600):type==='trail'?(data.life||400):type==='projectile'?1500:900;
   effects.push({type,x,y,data,color,scale,life,age:0,dead:false});
 }
 function updateFX(dt){
@@ -600,12 +761,9 @@ function updateFX(dt){
       case'damage':e.y-=32*dt/1000;break;
       case'text':e.y-=22*dt/1000;break;
       case'trail':
-        // 拖尾粒子: 向vx/vy方向移动，淡出
         if(e.data.vx!==undefined){e.x+=e.data.vx*dt/1000;e.y+=e.data.vy*dt/1000;}
         break;
-      case'ring':
-        // 扩散环: 半径从0→maxRadius
-        break;
+      case'ring':break;
       case'projectile':
         if(e.data.target&&!e.data.target.dead){
           const t=e.data.target,dx=t.x-e.x,dy=t.y-e.y,dist=Math.sqrt(dx*dx+dy*dy)||1,sp=e.data.speed*60;
@@ -621,28 +779,38 @@ function updateFX(dt){
     }
   });
   effects=effects.filter(e=>!e.dead);
+  // 地面裂缝衰减
+  groundCracks.forEach(c=>{c.age+=dt;if(c.age>=c.life)c.dead=true;});
+  groundCracks=groundCracks.filter(c=>!c.dead);
 }
 function drawFX(ctx){
+  // 地面裂缝
+  groundCracks.forEach(c=>{
+    const a=1-c.age/c.life;
+    ctx.strokeStyle=`rgba(139,90,43,${a*0.6})`;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(c.x,c.y);
+    ctx.lineTo(c.x+Math.cos(c.angle)*c.len,c.y+Math.sin(c.angle)*c.len);
+    ctx.stroke();
+  });
   effects.forEach(e=>{const a=Math.max(0,1-e.age/e.life);ctx.globalAlpha=a;
     switch(e.type){
-      case'damage':ctx.font=`bold ${Math.round(15*e.scale)}px "PingFang SC"`;ctx.fillStyle=e.color;ctx.textAlign='center';ctx.fillText(`-${e.data}`,e.x,e.y);break;
-      case'text':ctx.font='bold 11px "PingFang SC"';ctx.fillStyle=e.color;ctx.textAlign='center';ctx.fillText(e.data,e.x,e.y);break;
+      case'damage':ctx.font=`bold ${Math.round(16*e.scale)}px "PingFang SC"`;ctx.fillStyle=e.color;ctx.textAlign='center';ctx.fillText(`-${e.data}`,e.x,e.y);break;
+      case'text':ctx.font='bold 12px "PingFang SC"';ctx.fillStyle=e.color;ctx.textAlign='center';ctx.fillText(e.data,e.x,e.y);break;
       case'projectile':ctx.font='16px serif';ctx.textAlign='center';ctx.fillText(e.data.emoji,e.x,e.y);break;
-      case'trail':ctx.font='12px serif';ctx.textAlign='center';ctx.fillText(e.data.emoji||'✨',e.x,e.y);break;
+      case'trail':ctx.font=`${10+Math.random()*4}px serif`;ctx.textAlign='center';ctx.fillText(e.data.emoji||'✨',e.x,e.y);break;
       case'ring':
-        const prog=e.age/e.life;
-        const r=e.data.maxRadius*prog;
-        ctx.strokeStyle=e.data.color||e.color;ctx.lineWidth=3*(1-prog);ctx.globalAlpha=a*0.5;
+        const prog=e.age/e.life,r=e.data.maxRadius*prog;
+        ctx.strokeStyle=e.data.color||e.color;ctx.lineWidth=4*(1-prog);ctx.globalAlpha=a*0.5;
         ctx.beginPath();ctx.arc(e.x,e.y,r,0,Math.PI*2);ctx.stroke();
         break;
     }
     ctx.globalAlpha=1;
   });
-  // 牛冲锋拖尾(v1.0): 冲锋中的牛身后持续生成尘土
+  // 冲锋跳步尘土
   animals.forEach(a=>{
-    if(!a.dead&&a.chargeReady&&Math.random()<0.5){
-      ctx.globalAlpha=0.5;ctx.font='10px serif';ctx.textAlign='center';
-      ctx.fillText('💨',a.x-a.vx*0.15+(Math.random()-0.5)*8,a.y-a.vy*0.15+(Math.random()-0.5)*8);
+    if(!a.dead&&a.hopActive&&Math.random()<0.6){
+      ctx.globalAlpha=0.6;ctx.font='12px serif';ctx.textAlign='center';
+      ctx.fillText('💨',a.x-a.vx*0.2+(Math.random()-0.5)*12,a.y+a.size*0.3+(Math.random()-0.5)*10);
       ctx.globalAlpha=1;
     }
   });
@@ -654,7 +822,7 @@ function loop(ts){
   let dt=Math.min(ts-lastTime,100)*gameSpeed;lastTime=ts;
   ctx.clearRect(0,0,W,H);
 
-  // v1.0: 画面震动
+  // 画面震动
   if(shakeTimer>0){
     shakeTimer-=dt;
     const r=shakeIntensity*(shakeTimer/shakeMax);
@@ -710,7 +878,6 @@ function loop(ts){
 
         const atkDist=bodyDist+8;
         if(a.team!==b.team&&!a.dead&&!b.dead&&dist<atkDist){
-          // 俯冲中跳过recoil检查
           if(a.atkTimer<=0&&!a.ranged&&!a.stunned&&(a.recoilTimer<=0||a.diveTimer>0)&&!(a._chickPhase===0)){a.dealDmg(b);a.atkTimer=ATK_CD;}
           if(!b.dead&&b.atkTimer<=0&&!b.ranged&&!b.stunned&&(b.recoilTimer<=0||b.diveTimer>0)&&!(b._chickPhase===0)){b.dealDmg(a);b.atkTimer=ATK_CD;}
         }
@@ -756,7 +923,6 @@ function loop(ts){
   }
 
   ctx.restore();
-
   frameId=requestAnimationFrame(loop);
 }
 
@@ -773,9 +939,9 @@ function startBattle(){
   const margin=maxSize*0.55;
   const cx=arenaL+(arenaR-arenaL)/2;
   animals=[new Animal(ca,cx-margin,0),new Animal(cb,cx+margin,1)];
-  eggs=[];effects=[];gameState='fighting';winner=null;lastTime=0;document.getElementById('bf').disabled=true;
+  eggs=[];effects=[];gameState='fighting';winner=null;lastTime=0;groundCracks=[];document.getElementById('bf').disabled=true;
 }
-function resetBattle(){animals=[];eggs=[];effects=[];gameState='idle';winner=null;lastTime=0;document.getElementById('bf').disabled=false;}
+function resetBattle(){animals=[];eggs=[];effects=[];gameState='idle';winner=null;lastTime=0;groundCracks=[];document.getElementById('bf').disabled=false;}
 
 populateUI();
 document.getElementById('bf').addEventListener('click',startBattle);
