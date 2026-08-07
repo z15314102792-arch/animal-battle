@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>动物大战 v2.0</title>
+<title>动物大战 v2.1</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:#3a2f28;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:'PingFang SC','Microsoft YaHei',sans-serif;user-select:none;-webkit-user-select:none;padding:3px;touch-action:manipulation}
@@ -55,14 +55,13 @@
     <button class="speed-btn" data-s="6">6x</button>
   </div>
 </div>
-<div class="info">v2.0 · 空格开始 R重置 F随机 1-6调速 · 大乱斗</div>
+<div class="info">v2.1 · 空格开始 R重置 F随机 1-6调速 · 大乱斗</div>
 
 <script>
-// ==================== 画布(支持大乱斗自适应放大) ====================
+// ==================== 画布 ====================
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 let W,H,arenaL,arenaR,arenaT,arenaB,arenaScale=1;
 const BASE_MAXW=420,RATIO=1.55;
-
 function resize(scaleOverride){
   const sc=scaleOverride||arenaScale;
   const mw=Math.min(window.innerWidth-12,Math.floor(BASE_MAXW*sc)),ratio=RATIO;
@@ -88,137 +87,191 @@ initGrass();
 
 // ==================== 地图定义 ====================
 const MAPS={
-  grassland:{name:'🌿草原',desc:'全场每2秒回血2HP',color:'#7a9a50',bgTop:'#d4c5a0',bgBot:'#7a6a48'},
-  volcano:{name:'🌋火山',desc:'随机喷发·命中扣15血+眩晕',color:'#8b4513',bgTop:'#6b4030',bgBot:'#3a1a0a'},
-  ice:{name:'❄️冰原',desc:'移速+15%·碰墙滑行不反弹',color:'#a0c8e8',bgTop:'#d0e0f0',bgBot:'#8098b0'},
-  wind:{name:'🌪️风谷',desc:'移速+20%·风向5秒一切换',color:'#8a9a70',bgTop:'#c0c8a0',bgBot:'#6a7a50'},
+  grassland:{name:'🌿草原',desc:'全场每2秒回血2HP',color:'#7a9a50',bgTop:'#b8d890',bgBot:'#6a8a3a'},
+  volcano:{name:'🌋火山',desc:'随机喷发·命中扣15血+眩晕',color:'#8b4513',bgTop:'#5a3020',bgBot:'#2a1005'},
+  ice:{name:'❄️冰原',desc:'移速+15%·碰墙滑行',color:'#a0c8e8',bgTop:'#c8ddf0',bgBot:'#7090a8'},
+  wind:{name:'🌪️风谷',desc:'移速+20%·风向5秒切换',color:'#8a9a70',bgTop:'#b8c898',bgBot:'#5a7a40'},
   colosseum:{name:'🏛️竞技场',desc:'标准规则·无特殊效果',color:'#a09080',bgTop:'#d4c5a0',bgBot:'#8a7a58'}
 };
 let currentMap='colosseum';
 let windDir={x:1,y:0},windTimer=0,windInterval=5000;
-let volcanoTimer=0,volcanoInterval=0;
 
 function drawBG(ctx){
   const m=MAPS[currentMap];
-  // 天空/地面渐变
-  const sky=ctx.createLinearGradient(0,0,0,arenaT+18);
+  const sky=ctx.createLinearGradient(0,0,0,arenaT+25);
   sky.addColorStop(0,m.bgTop);sky.addColorStop(1,m.bgTop);
   ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
   const gnd=ctx.createLinearGradient(0,arenaT+6,0,H);
-  gnd.addColorStop(0,m.bgTop);gnd.addColorStop(0.5,m.bgBot);gnd.addColorStop(1,'#3a2a18');
+  gnd.addColorStop(0,m.bgTop);gnd.addColorStop(0.6,m.bgBot);gnd.addColorStop(1,'#2a1a0a');
   ctx.fillStyle=gnd;ctx.fillRect(0,arenaT+6,W,H-arenaT-6);
 
-  // 地图专属视觉效果
   if(currentMap==='grassland'){
-    ctx.fillStyle='#7a9a50';grassSpots.forEach(g=>{ctx.beginPath();ctx.arc(g.x,g.y,g.r,0,Math.PI*2);ctx.fill();});
-    // 花朵
-    for(let i=0;i<8;i++){const fx=arenaL+((i*137+53)%(arenaR-arenaL)),fy=arenaT+10+((i*89+31)%(arenaB-arenaT-10));ctx.fillStyle=['#ffdd57','#ff88aa','#ffffff','#ffaa88'][i%4];ctx.beginPath();ctx.arc(fx,fy,3,0,Math.PI*2);ctx.fill();}
+    // 茂盛草地
+    grassSpots.forEach(g=>{const gr=ctx.createRadialGradient(g.x,g.y,0,g.x,g.y,g.r);gr.addColorStop(0,'#8ab84a');gr.addColorStop(1,'#5a8a30');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(g.x,g.y,g.r,0,Math.PI*2);ctx.fill();});
+    // 花朵点缀
+    for(let i=0;i<12;i++){const fx=arenaL+((i*137+53)%(arenaR-arenaL)),fy=arenaT+10+((i*89+31)%(arenaB-arenaT-10));ctx.fillStyle=['#ffdd57','#ff88aa','#ffffff','#ffaa88','#ffcc44'][i%5];ctx.beginPath();ctx.arc(fx,fy,3.5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ffe066';ctx.beginPath();ctx.arc(fx,fy,1.5,0,Math.PI*2);ctx.fill();}
+    // 蝴蝶
+    const bt=Date.now()/1500;
+    for(let i=0;i<3;i++){const bx=arenaL+60+Math.sin(bt+i*2.1)*((arenaR-arenaL-120)*0.4),by=arenaT+20+Math.cos(bt*1.3+i*1.7)*30;ctx.fillStyle='#ff88cc';ctx.beginPath();ctx.arc(bx-3,by,2.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(bx+3,by,2.5,0,Math.PI*2);ctx.fill();}
   }else if(currentMap==='volcano'){
-    ctx.fillStyle='#5a3020';grassSpots.forEach(g=>{ctx.beginPath();ctx.arc(g.x,g.y,g.r*0.7,0,Math.PI*2);ctx.fill();});
-    // 熔岩裂缝
-    ctx.strokeStyle='rgba(255,120,30,0.3)';ctx.lineWidth=2;
-    for(let i=0;i<5;i++){ctx.beginPath();const cx=arenaL+((i*173+31)%(arenaR-arenaL)),cy=arenaB-((i*97+17)%(arenaB-arenaT)*0.4);ctx.moveTo(cx,cy);ctx.lineTo(cx+((i*67)%30-15),cy+((i*53)%25-12));ctx.stroke();}
+    // 焦土+岩浆纹
+    const vt=Date.now()/3000;
+    for(let i=0;i<8;i++){const cx=arenaL+((i*173+31)%(arenaR-arenaL)),cy=arenaB-10-((i*97+17)%(arenaB-arenaT)*0.5);const sg=ctx.createLinearGradient(cx-8,cy,cx+8,cy);sg.addColorStop(0,'rgba(255,120,20,0)');sg.addColorStop(0.5,'rgba(255,80,10,0.5)');sg.addColorStop(1,'rgba(255,120,20,0)');ctx.strokeStyle=sg;ctx.lineWidth=2.5+Math.sin(vt+i)*1;ctx.beginPath();ctx.moveTo(cx-10,cy);ctx.quadraticCurveTo(cx,cy-4+Math.sin(vt+i)*3,cx+10,cy);ctx.stroke();}
+    // 火星飘散
+    for(let i=0;i<6;i++){const sx=arenaL+((i*191+Date.now()/200)%(arenaR-arenaL)),sy=arenaT+15+((i*137+Date.now()/300)%(arenaB-arenaT-15));ctx.fillStyle='rgba(255,150,30,0.4)';ctx.beginPath();ctx.arc(sx,sy,1.5,0,Math.PI*2);ctx.fill();}
   }else if(currentMap==='ice'){
-    ctx.fillStyle='#d0e0f0';ctx.fillRect(arenaL,arenaT+6,arenaR-arenaL,arenaB-arenaT-6);
-    // 冰晶
-    ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=1;
-    for(let i=0;i<10;i++){const ix=arenaL+((i*151+41)%(arenaR-arenaL)),iy=arenaT+10+((i*113+59)%(arenaB-arenaT-10));ctx.beginPath();ctx.moveTo(ix,iy-6);ctx.lineTo(ix,iy+6);ctx.moveTo(ix-6,iy);ctx.lineTo(ix+6,iy);ctx.stroke();}
+    // 冰面反光
+    ctx.fillStyle='rgba(220,235,250,0.7)';ctx.fillRect(arenaL,arenaT+6,arenaR-arenaL,arenaB-arenaT-6);
+    const it=Date.now()/2000;
+    for(let i=0;i<8;i++){const ix=arenaL+((i*151+41)%(arenaR-arenaL)),iy=arenaT+15+((i*113+59)%(arenaB-arenaT-15));ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(ix,iy-8);ctx.lineTo(ix+Math.sin(it+i)*2,iy);ctx.lineTo(ix,iy+8);ctx.moveTo(ix-8,iy);ctx.lineTo(ix,iy+Math.cos(it+i)*2);ctx.lineTo(ix+8,iy);ctx.stroke();}
   }else if(currentMap==='wind'){
-    // 风线
-    ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1;
-    for(let i=0;i<12;i++){const wx=arenaL+(i*39+Date.now()/200)%(arenaR-arenaL),wy=arenaT+10+(i*31)%(arenaB-arenaT-10);ctx.beginPath();ctx.moveTo(wx,wy);ctx.lineTo(wx+Math.cos(Date.now()/800+i)*25,wy+Math.sin(Date.now()/800+i)*25);ctx.stroke();}
+    // 风吹草地 + 落叶
+    const wt=Date.now()/600;
+    ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.lineWidth=1;
+    for(let i=0;i<18;i++){const wx=arenaL+(i*29+wt*40)%(arenaR-arenaL),wy=arenaT+8+(i*33)%(arenaB-arenaT-8);ctx.beginPath();ctx.moveTo(wx,wy);ctx.lineTo(wx+Math.cos(wt+i*0.7)*22,wy+Math.sin(wt+i*0.7)*8);ctx.stroke();}
+    // 落叶
+    for(let i=0;i<5;i++){const lx=arenaL+(i*111+wt*60)%(arenaR-arenaL+60)-30,ly=arenaT+15+(i*67+Math.sin(wt+i)*30)%(arenaB-arenaT-15);ctx.fillStyle='rgba(180,160,100,0.5)';ctx.beginPath();ctx.ellipse(lx,ly,3,1.5,wt*0.3,0,Math.PI*2);ctx.fill();}
   }else{
-    // 竞技场: 石板+立柱
-    ctx.fillStyle='#a09080';grassSpots.forEach(g=>{ctx.beginPath();ctx.arc(g.x,g.y,g.r*0.5,0,Math.PI*2);ctx.fill();});
-    ctx.fillStyle='#8a7a6a';
-    for(let x=arenaL+40;x<arenaR;x+=80){ctx.beginPath();ctx.arc(x,arenaT+20,8,0,Math.PI*2);ctx.fill();}
+    // 竞技场石板
+    ctx.fillStyle='#c0b098';ctx.fillRect(arenaL,arenaT+6,arenaR-arenaL,arenaB-arenaT-6);
+    ctx.strokeStyle='rgba(0,0,0,0.08)';ctx.lineWidth=1;
+    for(let y=arenaT+20;y<arenaB;y+=35)for(let x=arenaL+10;x<arenaR;x+=55){ctx.strokeRect(x,y,55,35);}
+    ctx.fillStyle='#a09080';
+    for(let x=arenaL+50;x<arenaR;x+=90){ctx.beginPath();ctx.arc(x,arenaT+22,10,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(0,0,0,0.1)';ctx.lineWidth=2;ctx.stroke();}
   }
   // 围栏
-  ctx.fillStyle='#6b4a30';ctx.fillRect(arenaL-3,arenaT-2,arenaR-arenaL+6,2.5);
-  for(let x=arenaL;x<=arenaR;x+=34){ctx.fillStyle='#5a3a20';ctx.fillRect(x-2,arenaT-5,4,12);ctx.fillStyle='#6b4a30';}
+  ctx.fillStyle='#5a3820';ctx.fillRect(arenaL-3,arenaT-2,arenaR-arenaL+6,2.5);
+  for(let x=arenaL;x<=arenaR;x+=34){ctx.fillStyle='#4a2a10';ctx.fillRect(x-2.5,arenaT-6,5,14);ctx.fillStyle='#3a1a08';ctx.fillRect(x-1,arenaT-8,2,4);}
   ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.setLineDash([4,12]);ctx.strokeRect(arenaL,arenaT,arenaR-arenaL,arenaB-arenaT);ctx.setLineDash([]);
 }
 
 function mapTick(dt){
   if(currentMap==='grassland'){
-    // 每2秒全场回血2
     if(!mapTick._grassCD)mapTick._grassCD=0;
     mapTick._grassCD+=dt;
-    while(mapTick._grassCD>=2000){mapTick._grassCD-=2000;animals.forEach(a=>{if(!a.dead)a.hp=Math.min(a.maxHp,a.hp+2);});}
+    while(mapTick._grassCD>=2000){
+      mapTick._grassCD-=2000;
+      animals.forEach(a=>{if(!a.dead){a.hp=Math.min(a.maxHp,a.hp+2);
+        // 回血绿光
+        for(let i=0;i<3;i++)spawnSpark(a.x+(Math.random()-0.5)*a.size,a.y+(Math.random()-0.5)*a.size,1,2+Math.random()*3,['#5cb85c','#8fdf8f'],400,{vx:(Math.random()-0.5)*10,vy:-8-Math.random()*6});
+      }});
+    }
   }else if(currentMap==='volcano'){
     if(!mapTick._volCD)mapTick._volCD=0;
     mapTick._volCD+=dt;
-    if(mapTick._volCD>=8000+Math.random()*4000){
+    if(mapTick._volCD>=7000+Math.random()*5000){
       mapTick._volCD=0;
-      for(let i=0;i<3;i++){
-        const ex=arenaL+40+Math.random()*(arenaR-arenaL-80),ey=arenaT+30+Math.random()*(arenaB-arenaT-60);
-        mapHazards.push({x:ex,y:ey,life:1200,age:0,radius:40});
-        spawnFX('text',ex,ey-20,'喷发!','#ff4500');
-        for(let j=0;j<10;j++)spawnSpark(ex,ey,2,3+Math.random()*8,['#ff4500','#ff8800','#ffaa00'],800,{vx:(Math.random()-0.5)*40,vy:-15-Math.random()*30});
-        // 伤害范围内动物
-        animals.forEach(a=>{if(!a.dead&&Math.hypot(a.x-ex,a.y-ey)<40){a.hp-=15;if(a.hp<=0){a.hp=0;a.dead=true;}a.stunned=true;a.stunTimer=500;a.flashTimer=150;spawnFX('damage',a.x,a.y-16,15,'#ff4500');}});
-      }
+      // 预告闪烁
+      const ex=arenaL+40+Math.random()*(arenaR-arenaL-80),ey=arenaT+35+Math.random()*(arenaB-arenaT-70);
+      mapHazards.push({x:ex,y:ey,life:1500,age:0,radius:45,phase:'warning'});
+      // 0.5秒后喷发
+      setTimeout(()=>{
+        if(gameState!=='fighting')return;
+        mapHazards.push({x:ex,y:ey,life:800,age:0,radius:48,phase:'erupt'});
+        for(let j=0;j<16;j++)spawnSpark(ex,ey,2,4+Math.random()*10,['#ff4500','#ff8800','#ffaa00','#ffcc00'],1000,{vx:(Math.random()-0.5)*50,vy:-20-Math.random()*40});
+        // 震屏
+        triggerShake(6,300);
+        animals.forEach(a=>{if(!a.dead&&Math.hypot(a.x-ex,a.y-ey)<48){a.hp-=15;if(a.hp<=0){a.hp=0;a.dead=true;}a.stunned=true;a.stunTimer=500;a.flashTimer=180;spawnFX('damage',a.x,a.y-18,15,'#ff4500');for(let i=0;i<6;i++)spawnSpark(a.x,a.y,2,3+Math.random()*6,['#ff4500','#ff8800'],500,{vx:(Math.random()-0.5)*25,vy:(Math.random()-0.5)*20-10});}});
+      },500);
     }
   }else if(currentMap==='ice'){
-    // 移速+15%在Animal.update中处理
-    // 碰墙滑行已在_clampToArena中处理
     if(!mapTick._iceSnow)mapTick._iceSnow=0;
     mapTick._iceSnow+=dt;
-    if(mapTick._iceSnow>600){mapTick._iceSnow=0;mapParticles.push({x:Math.random()*(arenaR-arenaL)+arenaL,y:arenaT,life:4000,age:0});}
+    if(mapTick._iceSnow>400){mapTick._iceSnow=0;mapParticles.push({x:Math.random()*(arenaR-arenaL)+arenaL,y:arenaT,life:5000,age:0});}
   }else if(currentMap==='wind'){
     windTimer+=dt;
-    if(windTimer>=windInterval){windTimer=0;const a=Math.random()*Math.PI*2;windDir={x:Math.cos(a),y:Math.sin(a)};spawnFX('text',W/2,arenaT+30,'风向变!','#c0c8a0');}
+    if(windTimer>=windInterval){
+      windTimer=0;
+      const a=Math.random()*Math.PI*2;
+      windDir={x:Math.cos(a),y:Math.sin(a)};
+      const dirName=a<-2.3||a>2.3?'→':a<-0.7?'↑':a<0.7?'←':'↓';
+      spawnFX('text',W/2,arenaT+35,'风向'+dirName,'#ffdd57');
+      for(let i=0;i<8;i++)spawnSpark(W/2,arenaT+40,1,3+Math.random()*5,['#ffdd57','#ffe080'],500,{vx:(Math.random()-0.5)*40,vy:(Math.random()-0.5)*25-10});
+    }
   }
-  // 更新地图粒子
-  mapParticles.forEach(p=>{p.age+=dt;p.y+=(currentMap==='ice'?0.5:1)*dt/1000;if(p.age>=p.life)p.dead=true;});
+  mapParticles.forEach(p=>{p.age+=dt;p.y+=(currentMap==='ice'?0.4:1)*dt/1000;if(p.age>=p.life)p.dead=true;});
   mapParticles=mapParticles.filter(p=>!p.dead);
   mapHazards.forEach(h=>{h.age+=dt;if(h.age>=h.life)h.dead=true;});
   mapHazards=mapHazards.filter(h=>!h.dead);
 }
 
-// ==================== 动物数据 v2.0 ====================
+// ==================== 动物数据 v2.1 ====================
+// 全HP+20%, 龟回血 1.5→0.5
 const ANIMALS={
-  chicken:{id:'chicken',name:'母鸡',emoji:'🐔',bodyType:'bird',hp:120,speed:0.40,damage:4,size:48,color:'#f4a460',bodyColor:'#e8c888',desc:'远程撒米🍚·下蛋→滚雪球',ranged:true,rangedDmg:7,rangedCD:2600,rangedRange:160,rangedEmoji:'🍚',rangedSpeed:4.5,rangedMiss:0.25,skills:[{name:'下蛋',emoji:'🥚',cd:28000,type:'lay_egg',desc:'下蛋→孵化→新生命'}]},
-  bear:{id:'bear',name:'棕熊',emoji:'🐻',bodyType:'quad',hp:255,speed:0.34,damage:16,size:67,color:'#8B7355',bodyColor:'#7a5f40',passives:[{type:'rage',threshold:0.3,dmgBonus:0.5,desc:'HP<30%伤害+50%'},{type:'hibernate',interval:14000,pause:1500,wakeDmg:0.8,desc:'偶尔冬眠→醒来重击'}],skills:[{name:'眩晕拍击',emoji:'💫',cd:9000,type:'stun',duration:1500,windup:900,smartRange:80,desc:'蓄力→拍晕1.5秒(自身减伤55%)'}]},
-  wolf:{id:'wolf',name:'狼',emoji:'🐺',bodyType:'quad',hp:145,speed:0.72,damage:9,size:51,color:'#a0a0a0',bodyColor:'#808080',passives:[{type:'loneWolf',radius:71,dmgBonus:0.25,desc:'无同伴时伤害+25%'}],skills:[{name:'流血撕咬',emoji:'🩸',cd:5000,type:'bleed',damage:6,duration:3500,tickInterval:700,desc:'命中后流血3.5秒'}]},
-  bull:{id:'bull',name:'公牛',emoji:'🐂',bodyType:'quad',hp:235,speed:0.42,damage:11,size:61,color:'#c4a882',bodyColor:'#a08860',passives:[{type:'grudge',maxStacks:5,dmgPerStack:0.1,decay:5000,desc:'每挨打伤害+10%(最高+50%)'}],skills:[{name:'冲撞',emoji:'💨',cd:6500,type:'hop',damage:22,hopDist:75,smartMinDist:50,desc:'跳步75px→下次攻击+22伤'}]},
-  eagle:{id:'eagle',name:'鹰',emoji:'🦅',bodyType:'bird',hp:115,speed:0.72,damage:18,size:48,color:'#e8dcc8',bodyColor:'#c8b898',passives:[{type:'dodge',chance:0.18,desc:'18%闪避近战攻击'}],skills:[{name:'俯冲暴击',emoji:'⚡',cd:7500,type:'dive',multiplier:3.0,lockRange:200,diveSpeed:260,diveTime:900,desc:'锁定200px→俯冲3倍暴击·逃脱则自晕+双倍CD'}]},
-  snake:{id:'snake',name:'蛇',emoji:'🐍',bodyType:'snake',hp:135,speed:0.56,damage:6,size:45,color:'#5dade2',bodyColor:'#3d8d52',passives:[{type:'contagion',radius:54,spreadDmg:4,duration:3000,desc:'击杀→毒溅射周围敌人'}],skills:[{name:'毒液',emoji:'🧪',cd:4200,type:'poison',damage:5,duration:4500,tickInterval:900,poisonCloud:true,desc:'命中后中毒4.5秒+毒雾'}]},
-  lion:{id:'lion',name:'狮子',emoji:'🦁',bodyType:'quad',hp:195,speed:0.50,damage:14,size:61,color:'#e8a87c',bodyColor:'#c89060',passives:[{type:'intimidate',radius:70,fleeChance:0.06,desc:'周围敌人6%/秒概率逃跑'}],skills:[{name:'咆哮',emoji:'🦁',cd:6500,type:'roar',weakenPct:0.35,duration:4000,ringRadius:130,smartRange:130,desc:'咆哮降敌35%攻击4秒+全体音波'}]},
-  elephant:{id:'elephant',name:'大象',emoji:'🐘',bodyType:'quad',hp:360,speed:0.30,damage:15,size:77,color:'#b0a090',bodyColor:'#908070',passives:[{type:'unstoppable',desc:'免疫眩晕'},{type:'trample',radius:85,dps:0.8,desc:'碾压贴身小型敌人'}],skills:[{name:'地动山摇',emoji:'🌍',cd:9500,type:'quake',damage:12,stunDuration:1800,quakeRange:180,shakeIntensity:8,shakeTime:400,smartRange:180,desc:'范围180px·AOE12伤+眩晕+震动'}]},
-  turtle:{id:'turtle',name:'乌龟',emoji:'🐢',bodyType:'turtle',hp:180,speed:0.30,damage:6,size:48,color:'#6b8e6b',bodyColor:'#5a7a4a',passives:[{type:'regeneration',delay:3000,hpPerSec:1.5,desc:'3秒不受击后回血1.5/秒'}],skills:[{name:'缩壳',emoji:'🐢',cd:7500,type:'shield',reducePct:0.7,duration:3500,desc:'减伤70%持续3.5秒'}]}
+  chicken:{id:'chicken',name:'母鸡',emoji:'🐔',bodyType:'bird',hp:144,speed:0.40,damage:4,size:48,color:'#faf0e0',bodyColor:'#e8d0a8',desc:'远程撒米🍚·下蛋→滚雪球',ranged:true,rangedDmg:7,rangedCD:2600,rangedRange:160,rangedEmoji:'🍚',rangedSpeed:4.5,rangedMiss:0.25,skills:[{name:'下蛋',emoji:'🥚',cd:28000,type:'lay_egg',desc:'下蛋→孵化→新生命'}]},
+  bear:{id:'bear',name:'棕熊',emoji:'🐻',bodyType:'quad',hp:306,speed:0.34,damage:16,size:67,color:'#a07848',bodyColor:'#6b4a28',passives:[{type:'rage',threshold:0.3,dmgBonus:0.5,desc:'HP<30%伤害+50%'},{type:'hibernate',interval:14000,pause:1500,wakeDmg:0.8,desc:'偶尔冬眠→醒来重击'}],skills:[{name:'眩晕拍击',emoji:'💫',cd:9000,type:'stun',duration:1500,windup:900,smartRange:80,desc:'蓄力→拍晕1.5秒'}]},
+  wolf:{id:'wolf',name:'狼',emoji:'🐺',bodyType:'quad',hp:174,speed:0.72,damage:9,size:51,color:'#c0c0c0',bodyColor:'#707070',passives:[{type:'loneWolf',radius:71,dmgBonus:0.25,desc:'无同伴时伤害+25%'}],skills:[{name:'流血撕咬',emoji:'🩸',cd:5000,type:'bleed',damage:6,duration:3500,tickInterval:700,desc:'命中后流血3.5秒'}]},
+  bull:{id:'bull',name:'公牛',emoji:'🐂',bodyType:'quad',hp:282,speed:0.42,damage:11,size:61,color:'#d4b890',bodyColor:'#8a6040',passives:[{type:'grudge',maxStacks:5,dmgPerStack:0.1,decay:5000,desc:'每挨打伤害+10%(最高+50%)'}],skills:[{name:'冲撞',emoji:'💨',cd:6500,type:'hop',damage:22,hopDist:75,smartMinDist:50,desc:'跳步75px→下次攻击+22伤'}]},
+  eagle:{id:'eagle',name:'鹰',emoji:'🦅',bodyType:'bird',hp:138,speed:0.72,damage:18,size:48,color:'#f0ead8',bodyColor:'#5a3a20',passives:[{type:'dodge',chance:0.18,desc:'18%闪避近战攻击'}],skills:[{name:'俯冲暴击',emoji:'⚡',cd:7500,type:'dive',multiplier:3.0,lockRange:200,diveSpeed:260,diveTime:900,desc:'锁定200px→俯冲3倍暴击·逃脱则自晕+双倍CD'}]},
+  snake:{id:'snake',name:'蛇',emoji:'🐍',bodyType:'snake',hp:162,speed:0.56,damage:6,size:45,color:'#5dade2',bodyColor:'#3d8d52',passives:[{type:'contagion',radius:54,spreadDmg:4,duration:3000,desc:'击杀→毒溅射周围敌人'}],skills:[{name:'毒液',emoji:'🧪',cd:4200,type:'poison',damage:5,duration:4500,tickInterval:900,poisonCloud:true,desc:'命中后中毒4.5秒+毒雾'}]},
+  lion:{id:'lion',name:'狮子',emoji:'🦁',bodyType:'quad',hp:234,speed:0.50,damage:14,size:61,color:'#e8b870',bodyColor:'#a07040',passives:[{type:'intimidate',radius:70,fleeChance:0.06,desc:'周围敌人6%/秒概率逃跑'}],skills:[{name:'咆哮',emoji:'🦁',cd:6500,type:'roar',weakenPct:0.35,duration:4000,ringRadius:130,smartRange:130,desc:'咆哮降敌35%攻击4秒+全体音波'}]},
+  elephant:{id:'elephant',name:'大象',emoji:'🐘',bodyType:'quad',hp:432,speed:0.30,damage:15,size:77,color:'#b8a898',bodyColor:'#807060',passives:[{type:'unstoppable',desc:'免疫眩晕'},{type:'trample',radius:85,dps:0.8,desc:'碾压贴身小型敌人'}],skills:[{name:'地动山摇',emoji:'🌍',cd:9500,type:'quake',damage:12,stunDuration:1800,quakeRange:180,shakeIntensity:8,shakeTime:400,smartRange:180,desc:'范围180px·AOE12伤+眩晕+震动'}]},
+  turtle:{id:'turtle',name:'乌龟',emoji:'🐢',bodyType:'turtle',hp:216,speed:0.30,damage:6,size:48,color:'#6b8e6b',bodyColor:'#5a7a4a',passives:[{type:'regeneration',delay:3000,hpPerSec:0.5,desc:'3秒不受击后回血0.5/秒'}],skills:[{name:'缩壳',emoji:'🐢',cd:7500,type:'shield',reducePct:0.7,duration:3500,desc:'减伤70%持续3.5秒'}]}
 };
 
-const CHICK_CFG={name:'小鸡',emoji:'🐤',bodyType:'bird',hp:15,speed:0.28,damage:0,size:26,color:'#f4c460',bodyColor:'#e8b840',isMinion:true,ranged:false,_chickPhase:0};
-const YOUNG_CFG={name:'青年鸡',emoji:'🐥',bodyType:'bird',hp:24,speed:0.32,damage:0,size:32,color:'#f4c460',bodyColor:'#e8b840',isMinion:true,ranged:true,rangedDmg:4,rangedCD:3200,rangedRange:130,rangedEmoji:'🍚',rangedSpeed:4,rangedMiss:0.40,_chickPhase:1};
-const HEN_CFG={name:'母鸡',emoji:'🐔',bodyType:'bird',hp:36,speed:0.36,damage:2,size:38,color:'#f4a460',bodyColor:'#e8c888',isMinion:true,ranged:true,rangedDmg:6,rangedCD:3000,rangedRange:150,rangedEmoji:'🍚',rangedSpeed:4.2,rangedMiss:0.25,_chickPhase:2,_canLay:true,skills:[{name:'下蛋',emoji:'🥚',cd:30000,type:'lay_egg',desc:'下蛋→孵化→新生命'}]};
-const ROOSTER_CFG={name:'公鸡',emoji:'🐓',bodyType:'bird',hp:57,speed:0.42,damage:8,size:42,color:'#d4745c',bodyColor:'#b05040',isMinion:true,ranged:false,_chickPhase:2};
+const CHICK_CFG={name:'小鸡',emoji:'🐤',bodyType:'bird',hp:18,speed:0.28,damage:0,size:26,color:'#faf0d0',bodyColor:'#e8d8a0',isMinion:true,ranged:false,_chickPhase:0};
+const YOUNG_CFG={name:'青年鸡',emoji:'🐥',bodyType:'bird',hp:29,speed:0.32,damage:0,size:32,color:'#faf0d0',bodyColor:'#e8d8a0',isMinion:true,ranged:true,rangedDmg:4,rangedCD:3200,rangedRange:130,rangedEmoji:'🍚',rangedSpeed:4,rangedMiss:0.40,_chickPhase:1};
+const HEN_CFG={name:'母鸡',emoji:'🐔',bodyType:'bird',hp:43,speed:0.36,damage:2,size:38,color:'#faf0e0',bodyColor:'#e8d0a8',isMinion:true,ranged:true,rangedDmg:6,rangedCD:3000,rangedRange:150,rangedEmoji:'🍚',rangedSpeed:4.2,rangedMiss:0.25,_chickPhase:2,_canLay:true,skills:[{name:'下蛋',emoji:'🥚',cd:30000,type:'lay_egg',desc:'下蛋→孵化→新生命'}]};
+const ROOSTER_CFG={name:'公鸡',emoji:'🐓',bodyType:'bird',hp:68,speed:0.42,damage:8,size:42,color:'#e8a870',bodyColor:'#983828',isMinion:true,ranged:false,_chickPhase:2};
 
 // ==================== 状态 ====================
 let gameSpeed=2,animals=[],eggs=[],effects=[],items=[],gameState='idle',winner=null,lastTime=0,frameId=null;
 let shakeX=0,shakeY=0,shakeIntensity=0,shakeTimer=0,shakeMax=0,shakeCD=0;
 let groundCracks=[],selectedAnimals=[];
-let itemSpawnCD=20000+Math.random()*20000; // 首次20-40s
+let itemSpawnCD=20000+Math.random()*20000;
 
 function triggerShake(intensity,duration){
-  if(shakeCD>0)return; // 震动冷却
+  if(shakeCD>0)return;
   shakeIntensity=Math.max(shakeIntensity,intensity);shakeMax=Math.max(shakeMax,duration);shakeTimer=Math.max(shakeTimer,duration);
   shakeCD=800;
 }
 
 const ATK_CD=1050,KB=4,DIR_MIN=1000,DIR_MAX=2800,BASE_CRIT=0.05,RECOIL_TIME=350,STUN_IMMUN=2500;
+const SPARK_COLORS={hit:['#fff','#ffe066','#ffd700'],bleed:['#e74c3c','#ff4444','#cc0000'],poison:['#8e44ad','#bb66dd','#662288'],dust:['#c4a882','#a09080','#8a7a6a'],sky:['#87CEEB','#a0d8ef','#60b0d0'],gold:['#ffd700','#ffe080','#ffaa00'],quake:['#cd853f','#8B6914','#a0522d'],green:['#6b8e6b','#5cb85c','#4a7a4a'],ice:['#aaddff','#88ccff','#ffffff'],heal:['#5cb85c','#8fdf8f','#a0f0a0']};
 
-// 粒子颜色预设
-const SPARK_COLORS={hit:['#fff','#ffe066','#ffd700'],bleed:['#e74c3c','#ff4444','#cc0000'],poison:['#8e44ad','#bb66dd','#662288'],dust:['#c4a882','#a09080','#8a7a6a'],sky:['#87CEEB','#a0d8ef','#60b0d0'],gold:['#ffd700','#ffe080','#ffaa00'],quake:['#cd853f','#8B6914','#a0522d'],green:['#6b8e6b','#5cb85c','#4a7a4a']};
-
-// ==================== 道具定义 ====================
+// ==================== 道具定义 v2.1 ====================
 const ITEM_TYPES=[
-  {type:'heal',name:'生命果',icon:'❤️',desc:'回复20HP',weight:50,color:'#ff6b6b',apply(a){a.hp=Math.min(a.maxHp,a.hp+20);spawnFX('text',a.x,a.y-20,'+20HP','#ff6b6b');}},
-  {type:'speed',name:'疾风菇',icon:'⚡',desc:'8秒移速+30%',weight:30,color:'#ffe066',apply(a){a.speedBoost=0.3;a.speedBoostTimer=8000;spawnFX('text',a.x,a.y-20,'加速!','#ffe066');}},
-  {type:'power',name:'力量菇',icon:'💪',desc:'8秒伤害+40%',weight:15,color:'#ff8800',apply(a){a.dmgBoost=0.4;a.dmgBoostTimer=8000;spawnFX('text',a.x,a.y-20,'力量!','#ff8800');}},
-  {type:'shield',name:'护盾石',icon:'🛡️',desc:'8秒减伤50%',weight:15,color:'#88ccff',apply(a){a.shieldActive=true;a.shieldTimer=8000;a.shieldReduce=0.5;spawnFX('text',a.x,a.y-20,'护盾!','#88ccff');}},
-  {type:'poison',name:'毒菇',icon:'💀',desc:'对最近敌人施毒5秒',weight:10,color:'#8e44ad',apply(a){const foes=animals.filter(e=>!e.dead&&e!==a);if(foes.length>0){const t=foes.reduce((closest,cur)=>Math.hypot(cur.x-a.x,cur.y-a.y)<Math.hypot(closest.x-a.x,closest.y-a.y)?cur:closest);t.dotEffects.push({dmg:5,dur:5000,tick:1000,elapsed:0,tickAcc:0});spawnFX('text',t.x,t.y-20,'中毒!','#8e44ad');for(let i=0;i<8;i++)spawnSpark(t.x,t.y,2,3+Math.random()*6,SPARK_COLORS.poison,600,{vx:(Math.random()-0.5)*25,vy:(Math.random()-0.5)*20-10});}}},
-  {type:'freeze',name:'冰晶',icon:'❄️',desc:'冻结最近敌人2秒',weight:8,color:'#88ddff',apply(a){const foes=animals.filter(e=>!e.dead&&e!==a);if(foes.length>0){const t=foes.reduce((closest,cur)=>Math.hypot(cur.x-a.x,cur.y-a.y)<Math.hypot(closest.x-a.x,closest.y-a.y)?cur:closest);if(t.stunImmune<=0&&!t.passives.some(p=>p.type==='unstoppable')){t.stunned=true;t.stunTimer=2000;t.stunImmune=STUN_IMMUN;spawnFX('text',t.x,t.y-20,'冻结!','#88ddff');for(let i=0;i<6;i++)spawnSpark(t.x,t.y,2,3+Math.random()*5,['#aaddff','#ffffff','#88ccff'],500,{vx:(Math.random()-0.5)*15,vy:(Math.random()-0.5)*15-8});}}}}
+  {type:'heal',name:'生命果',icon:'❤️',desc:'回复20HP',weight:50,color:'#ff5555',apply(a){
+    a.hp=Math.min(a.maxHp,a.hp+20);a._healFlash=400;
+    spawnFX('text',a.x,a.y-24,'+20HP','#ff5555',1.3);
+    for(let i=0;i<12;i++)spawnSpark(a.x,a.y,2,3+Math.random()*8,['#ff5555','#ff8888','#ffaaaa','#ffffff'],700,{vx:(Math.random()-0.5)*35,vy:(Math.random()-0.5)*30-15});
+  }},
+  {type:'speed',name:'疾风菇',icon:'⚡',desc:'8秒移速+30%',weight:30,color:'#ffdd44',apply(a){
+    a.speedBoost=0.3;a.speedBoostTimer=8000;a._speedFlash=400;
+    spawnFX('text',a.x,a.y-24,'加速30%!','#ffdd44',1.2);
+    for(let i=0;i<8;i++)spawnSpark(a.x,a.y,1,3+Math.random()*6,['#ffdd44','#ffe680','#ffffff'],600,{vx:(Math.random()-0.5)*30,vy:(Math.random()-0.5)*25-12});
+  }},
+  {type:'power',name:'力量菇',icon:'💪',desc:'8秒伤害+40%',weight:15,color:'#ff6600',apply(a){
+    a.dmgBoost=0.4;a.dmgBoostTimer=8000;a._powerFlash=400;
+    spawnFX('text',a.x,a.y-24,'伤害+40%!','#ff6600',1.2);
+    for(let i=0;i<8;i++)spawnSpark(a.x,a.y,2,3+Math.random()*7,['#ff6600','#ff9944','#ffcc88'],600,{vx:(Math.random()-0.5)*30,vy:(Math.random()-0.5)*25-12});
+  }},
+  {type:'shield',name:'护盾石',icon:'🛡️',desc:'8秒减伤50%',weight:15,color:'#44aaff',apply(a){
+    a.shieldActive=true;a.shieldTimer=8000;a.shieldReduce=0.5;a._shieldFlash=400;
+    spawnFX('text',a.x,a.y-24,'减伤50%!','#44aaff',1.2);
+    for(let i=0;i<10;i++)spawnSpark(a.x,a.y,2,3+Math.random()*7,['#44aaff','#88ccff','#ffffff'],600,{vx:(Math.random()-0.5)*30,vy:(Math.random()-0.5)*25-12});
+  }},
+  {type:'poison',name:'毒菇',icon:'💀',desc:'对最近敌人施毒5秒',weight:10,color:'#9944cc',apply(a){
+    const foes=animals.filter(e=>!e.dead&&e!==a);
+    if(foes.length>0){
+      const t=foes.reduce((closest,cur)=>Math.hypot(cur.x-a.x,cur.y-a.y)<Math.hypot(closest.x-a.x,closest.y-a.y)?cur:closest);
+      t.dotEffects.push({dmg:5,dur:5000,tick:1000,elapsed:0,tickAcc:0,fromItem:true});
+      t._poisonFlash=400;
+      spawnFX('text',t.x,t.y-24,'施毒!','#9944cc',1.2);
+      for(let i=0;i<14;i++)spawnSpark(t.x,t.y,2,3+Math.random()*9,SPARK_COLORS.poison,800,{vx:(Math.random()-0.5)*35,vy:(Math.random()-0.5)*30-15});
+    }
+  }},
+  {type:'freeze',name:'冰晶',icon:'❄️',desc:'冻结最近敌人2秒',weight:8,color:'#44ccff',apply(a){
+    const foes=animals.filter(e=>!e.dead&&e!==a);
+    if(foes.length>0){
+      const t=foes.reduce((closest,cur)=>Math.hypot(cur.x-a.x,cur.y-a.y)<Math.hypot(closest.x-a.x,closest.y-a.y)?cur:closest);
+      if(t.stunImmune<=0&&!t.passives.some(p=>p.type==='unstoppable')){
+        t.stunned=true;t.stunTimer=2000;t.stunImmune=STUN_IMMUN;t._frozen=true;t._frozenTimer=2000;
+        spawnFX('text',t.x,t.y-24,'冻结!','#44ccff',1.2);
+        for(let i=0;i<10;i++)spawnSpark(t.x,t.y,2,3+Math.random()*6,SPARK_COLORS.ice,700,{vx:(Math.random()-0.5)*25,vy:(Math.random()-0.5)*20-10});
+      }
+    }
+  }}
 ];
 
 function pickItemType(){
@@ -233,17 +286,24 @@ class Item{
     this.type=pickItemType();
     this.x=x;this.y=y;this.life=15000;this.age=0;this.dead=false;this.bob=0;
   }
-  update(dt){this.age+=dt;this.bob=Math.sin(this.age/300)*2;if(this.age>=this.life)this.dead=true;}
+  update(dt){this.age+=dt;this.bob=Math.sin(this.age/300)*3;if(this.age>=this.life)this.dead=true;}
   draw(ctx){
     const a=this.age>13000?1-(this.age-13000)/2000:1;
     ctx.globalAlpha=a;
-    // 光晕
-    const glow=ctx.createRadialGradient(this.x,this.y+this.bob,4,this.x,this.y+this.bob,16);
-    glow.addColorStop(0,this.type.color);glow.addColorStop(1,'transparent');
-    ctx.fillStyle=glow;ctx.beginPath();ctx.arc(this.x,this.y+this.bob,16,0,Math.PI*2);ctx.fill();
+    // 旋转光晕
+    const rt=Date.now()/800;
+    const glow=ctx.createRadialGradient(this.x,this.y+this.bob,3,this.x,this.y+this.bob,18);
+    glow.addColorStop(0,this.type.color);glow.addColorStop(0.5,this.type.color+'88');glow.addColorStop(1,'transparent');
+    ctx.fillStyle=glow;ctx.beginPath();ctx.arc(this.x,this.y+this.bob,18,0,Math.PI*2);ctx.fill();
+    // 外圈旋转
+    ctx.strokeStyle=this.type.color;ctx.lineWidth=1.5;ctx.globalAlpha=a*0.7;ctx.setLineDash([4,3]);ctx.lineDashOffset=rt*30;
+    ctx.beginPath();ctx.arc(this.x,this.y+this.bob,14,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
     // 图标
-    ctx.font='18px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.globalAlpha=a;ctx.font='20px serif';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(this.type.icon,this.x,this.y+this.bob);
+    // 名称标签
+    ctx.globalAlpha=a*0.8;ctx.font='bold 8px "PingFang SC"';ctx.fillStyle='#fff';
+    ctx.fillText(this.type.name,this.x,this.y+this.bob+16);
     ctx.globalAlpha=1;
   }
 }
@@ -284,11 +344,21 @@ class Animal{
     this.hopTimer=0;this.hopActive=false;
     this.speedBoost=0;this.speedBoostTimer=0;
     this.dmgBoost=0;this.dmgBoostTimer=0;
+    // 视觉闪烁
+    this._healFlash=0;this._speedFlash=0;this._powerFlash=0;this._shieldFlash=0;this._poisonFlash=0;
+    this._frozen=false;this._frozenTimer=0;
   }
 
   update(dt){
     if(this.dead)return;const rd=dt;
     this.aliveTimer+=rd;
+    if(this._healFlash>0)this._healFlash-=rd;
+    if(this._speedFlash>0)this._speedFlash-=rd;
+    if(this._powerFlash>0)this._powerFlash-=rd;
+    if(this._shieldFlash>0)this._shieldFlash-=rd;
+    if(this._poisonFlash>0)this._poisonFlash-=rd;
+    if(this._frozen){this._frozenTimer-=rd;if(this._frozenTimer<=0)this._frozen=false;}
+
     if(this._chickPhase===0){this._chickTimer+=rd;if(this._chickTimer>=10000)this._growTo(YOUNG_CFG);}
     else if(this._chickPhase===1){this._chickTimer+=rd;if(this._chickTimer>=12000)this._growTo(Math.random()<0.25?ROOSTER_CFG:HEN_CFG);}
     this.scaleBob=Math.sin(this.aliveTimer/600)*0.03;
@@ -324,7 +394,6 @@ class Animal{
       if(this.lastHitTimer<=0&&this.hp<this.maxHp){this.hp=Math.min(this.maxHp,this.hp+reg.hpPerSec*rd/1000);}
     }
 
-    // 蓄力(空击检查: 需敌人在范围内)
     if(this.windupTimer>0){
       this.windupTimer-=rd;
       const prog=1-this.windupTimer/this.windupMax;
@@ -333,7 +402,6 @@ class Animal{
       if(this.windupTimer<=0){this.stunNext=true;spawnFX('text',this.x,this.y-24,'拍击!','#ff6b6b');triggerShake(5,200);}
     }
 
-    // 俯冲
     if(this.diveTimer>0){
       this.diveTimer-=rd;const prog=1-this.diveTimer/this.diveMax;let diveAborted=false;
       if(this.diveTarget&&!this.diveTarget.dead&&prog>0.3){
@@ -369,13 +437,11 @@ class Animal{
 
     let spdMult=1;if(this.slowed)spdMult*=(1-this.slowPct);
     if(this.speedBoost>0)spdMult*=(1+this.speedBoost);
-    // 地图加成
     if(currentMap==='ice')spdMult*=1.15;
     if(currentMap==='wind')spdMult*=1.20;
     const curSpd=Math.sqrt(this.vx*this.vx+this.vy*this.vy)||1;
     const maxSpd=this.speed*60*spdMult;
     if(curSpd>maxSpd&&this.diveTimer<=0&&!this.hopActive){this.vx=this.vx/curSpd*maxSpd;this.vy=this.vy/curSpd*maxSpd;}
-    // 风谷: 风向力
     if(currentMap==='wind'){this.vx+=windDir.x*20*rd/1000;this.vy+=windDir.y*20*rd/1000;}
     this.x+=this.vx*rd/1000;this.y+=this.vy*rd/1000;
     this._clampToArena();
@@ -412,10 +478,8 @@ class Animal{
     if(this.x>arenaR-r){this.x=arenaR-r;bounced=true;}
     if(this.y<arenaT+r){this.y=arenaT+r;bounced=true;}
     if(this.y>arenaB-r){this.y=arenaB-r;bounced=true;}
-    // 冰原: 碰墙滑行不反弹
     if(bounced&&currentMap!=='ice')this._newDir();
     else if(bounced&&currentMap==='ice'){
-      // 反向速度, 不换随机方向
       if(this.x<=arenaL+r||this.x>=arenaR-r)this.vx*=-0.7;
       if(this.y<=arenaT+r||this.y>=arenaB-r)this.vy*=-0.7;
     }
@@ -487,7 +551,7 @@ class Animal{
 
   useSkill(skill,enemies){
     if(this.isMinion&&!this._canLay)return;
-    if(skill.smartRange&&enemies.filter(e=>!e.dead&&Math.hypot(e.x-this.x,e.y-this.y)<skill.smartRange).length===0)return; // 智能索敌
+    if(skill.smartRange&&enemies.filter(e=>!e.dead&&Math.hypot(e.x-this.x,e.y-this.y)<skill.smartRange).length===0)return;
     skill.cdTimer=skill.cd;
     const t=enemies.length>0?enemies[0]:null;
     switch(skill.type){
@@ -509,7 +573,6 @@ class Animal{
         break;
       case'hop':
         if(t){
-          // 最小距离检查
           if(skill.smartMinDist&&Math.hypot(t.x-this.x,t.y-this.y)<skill.smartMinDist){skill.cdTimer=skill.cd*0.3;break;}
           const dx=t.x-this.x,dy=t.y-this.y,dist=Math.hypot(dx,dy)||1;
           this.vx=(dx/dist)*this.speed*130;this.vy=(dy/dist)*this.speed*110;
@@ -546,20 +609,20 @@ class Animal{
 
   rangedAttack(target){if(!target||target.dead)return;this.rangedTimer=this.rangedCD;const missChance=this.rangedMiss||0;const miss=Math.random()<missChance;let pdata;if(miss){const a=Math.random()*Math.PI*2,sp=this.rangedSpeed*55;pdata={emoji:this.rangedEmoji,damage:0,target:null,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1000,_team:this.team};}else{pdata={emoji:this.rangedEmoji,damage:this.rangedDmg,speed:this.rangedSpeed,target:target,_team:this.team};}spawnFX('projectile',this.x,this.y-6,pdata,miss?'#999':'#f4a460');if(miss)spawnFX('text',this.x,this.y-16,'偏了','#999');}
 
-  // ==================== v2.0: 几何化身体绘制 ====================
+  // ==================== v2.1: 美观灵动的身体绘制 ====================
   drawBody(ctx,renderY,bScale){
     const s=this.size,bs=s*bScale;
     const bx=this.x,by=renderY+s*0.18;
     const bodyType=this.bodyType||'quad';
     const id=this.id||'';
     const t=this.aliveTimer;
-    const wingFlap=Math.sin(t/180)*0.3;
+    const wingFlap=Math.sin(t/150)*0.35;
 
     // 地面阴影
-    ctx.fillStyle='rgba(0,0,0,0.18)';
-    ctx.beginPath();ctx.ellipse(bx,renderY+s*0.42+2,bs*0.45,bs*0.1,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(0,0,0,0.16)';
+    ctx.beginPath();ctx.ellipse(bx,renderY+s*0.43+2,bs*0.44,bs*0.1,0,0,Math.PI*2);ctx.fill();
 
-    // ===== 蛇: 多边形分段 =====
+    // ========== 🐍蛇: 保留原设计 (圆润分段) ==========
     if(bodyType==='snake'){
       ctx.lineCap='round';ctx.lineJoin='round';
       const segCount=8;
@@ -568,247 +631,516 @@ class Animal{
         const sx=bx+Math.sin(t/350+i*1.2)*bs*0.18;
         const sy=by-bs*0.45+frac*bs*0.85;
         const sw=bs*0.32*(1-frac*0.65);
-        // 用六边形代替圆形
         ctx.fillStyle=`hsl(${120+frac*20},${50-frac*20}%,${35-frac*8}%)`;
         ctx.beginPath();
         for(let j=0;j<6;j++){const a=Math.PI*2/6*j;const px=sx+Math.cos(a)*sw,py=sy+Math.sin(a)*sw*0.8;j===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
         ctx.closePath();ctx.fill();
         ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=0.8;ctx.stroke();
       }
-      // 三角头
       const hx=bx+Math.sin(t/350)*bs*0.15,hy=by-bs*0.45;
       ctx.fillStyle='#3d8d52';ctx.beginPath();
       ctx.moveTo(hx,hy-bs*0.25);ctx.lineTo(hx+bs*0.18,hy);ctx.lineTo(hx,hy+bs*0.12);ctx.lineTo(hx-bs*0.18,hy);ctx.closePath();ctx.fill();
       ctx.strokeStyle='rgba(0,0,0,0.35)';ctx.lineWidth=1.2;ctx.stroke();
-      // 折线蛇信
       ctx.strokeStyle='#e74c3c';ctx.lineWidth=1.5;ctx.lineCap='round';
       ctx.beginPath();ctx.moveTo(hx+bs*0.14,hy);ctx.lineTo(hx+bs*0.28,hy-bs*0.1);ctx.moveTo(hx+bs*0.22,hy);ctx.lineTo(hx+bs*0.32,hy+bs*0.08);ctx.stroke();
+      // 鳞片光泽
+      ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;
+      for(let i=0;i<segCount-1;i++){const frac=i/segCount;ctx.beginPath();ctx.arc(bx+Math.sin(t/350+i*1.2)*bs*0.18,by-bs*0.45+frac*bs*0.85,bs*0.3*(1-frac*0.65)*0.85,0,Math.PI*2);ctx.stroke();}
+      return;
     }
 
-    // ===== 龟: 多边形甲壳 =====
-    else if(bodyType==='turtle'){
+    // ========== 🐢乌龟: 保留原设计 ==========
+    if(bodyType==='turtle'){
       ctx.fillStyle='rgba(0,0,0,0.15)';ctx.beginPath();ctx.ellipse(bx,by+bs*0.08,bs*0.55,bs*0.42,0,0,Math.PI*2);ctx.fill();
       const shellGrad=ctx.createRadialGradient(bx-bs*0.1,by-bs*0.15,bs*0.05,bx,by,bs*0.55);
       shellGrad.addColorStop(0,'#9ab87a');shellGrad.addColorStop(0.5,this.bodyColor);shellGrad.addColorStop(1,'#3a5a2a');
       ctx.fillStyle=shellGrad;
-      // 八边形壳(更硬朗)
       ctx.beginPath();const octR=bs*0.52;
       for(let i=0;i<8;i++){const a=Math.PI*2/8*i-Math.PI/8;const px=bx+Math.cos(a)*octR,py=by+Math.sin(a)*octR*0.78;i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
       ctx.closePath();ctx.fill();
       ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=2.5;ctx.stroke();
-      // 壳纹(折线)
       ctx.strokeStyle='rgba(0,0,0,0.12)';ctx.lineWidth=1.2;
       for(let i=0;i<4;i++){const a=Math.PI*2/4*i-Math.PI/4;ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(bx+Math.cos(a)*octR*0.85,by+Math.sin(a)*octR*0.65);ctx.stroke();}
-      // 头
       ctx.fillStyle='#7a9a5a';ctx.beginPath();ctx.ellipse(bx,by-bs*0.4,bs*0.18,bs*0.14,0,0,Math.PI*2);ctx.fill();
       ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1;ctx.stroke();
       ctx.fillStyle='#222';ctx.beginPath();ctx.arc(bx+bs*0.08,by-bs*0.43,bs*0.04,0,Math.PI*2);ctx.fill();
-      // 四肢(多边形)
       ctx.fillStyle='#7a9a5a';
       [[-bs*0.35,bs*0.15],[-bs*0.3,bs*0.35],[bs*0.3,bs*0.35],[bs*0.35,bs*0.15]].forEach(([lx,ly])=>{
         ctx.beginPath();ctx.ellipse(bx+lx,by+ly,bs*0.16,bs*0.08,-0.3,0,Math.PI*2);ctx.fill();
         ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=1;ctx.stroke();
-        // 趾
         ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1;
         for(let toe=-1;toe<=1;toe++){ctx.beginPath();ctx.moveTo(bx+lx,by+ly+bs*0.08);ctx.lineTo(bx+lx+toe*bs*0.05,by+ly+bs*0.14);ctx.stroke();}
       });
+      return;
     }
 
-    // ===== 鸟类: 几何翅膀 =====
-    else if(bodyType==='bird'){
-      // 身体: 圆角菱形
-      const bodyGrad=ctx.createLinearGradient(bx,by-bs*0.3,bx,by+bs*0.3);
-      bodyGrad.addColorStop(0,this.color);bodyGrad.addColorStop(1,this.bodyColor);
-      ctx.fillStyle=bodyGrad;
+    // ========== 以下全部用贝塞尔曲线重绘, 追求美观灵动 ==========
+
+    // 通用呼吸动画
+    const breath=1+Math.sin(t/500)*0.04;
+
+    if(id==='bear'){
+      // 🐻 棕熊: 圆润可爱+力量感, 贝塞尔曲体
+      const bh=bs*0.38*breath,bw=bs*0.48;
+      // 身体渐层
+      const bgr=ctx.createLinearGradient(bx,by-bh,bx,by+bh);
+      bgr.addColorStop(0,'#c09060');bgr.addColorStop(0.4,'#a07848');bgr.addColorStop(1,'#6b3a20');
+      ctx.fillStyle=bgr;
+      // 身体: 圆润梯形(贝塞尔)
       ctx.beginPath();
-      ctx.moveTo(bx,by-bs*0.35);ctx.lineTo(bx+bs*0.3,by-bs*0.05);ctx.lineTo(bx+bs*0.25,by+bs*0.25);
-      ctx.lineTo(bx-bs*0.25,by+bs*0.25);ctx.lineTo(bx-bs*0.3,by-bs*0.05);ctx.closePath();ctx.fill();
-      ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1.5;ctx.stroke();
-
-      if(id==='eagle'){
-        // 鹰: 三角形大翅+锯齿
-        const wBase=by-bs*0.1;
-        ctx.fillStyle=this.bodyColor;ctx.globalAlpha=0.85;
-        [-1,1].forEach(dir=>{
-          ctx.beginPath();
-          ctx.moveTo(bx+dir*bs*0.1,wBase);
-          ctx.lineTo(bx+dir*bs*0.75,wBase-bs*0.3+dir*wingFlap*bs*1.5);
-          ctx.lineTo(bx+dir*bs*0.55,wBase-bs*0.08+dir*wingFlap*bs*0.5);
-          ctx.lineTo(bx+dir*bs*0.25,wBase+bs*0.05);ctx.closePath();ctx.fill();
-          // 羽尖锯齿
-          ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=1;
-          for(let j=0;j<3;j++){const fy=wBase-bs*0.2+j*bs*0.1+dir*wingFlap*bs*0.8;ctx.beginPath();ctx.moveTo(bx+dir*bs*0.35,fy);ctx.lineTo(bx+dir*bs*0.7,fy);ctx.stroke();}
-        });
-        ctx.globalAlpha=1;
-        // 钩喙三角
-        ctx.fillStyle='#e8a030';ctx.beginPath();
-        ctx.moveTo(bx+bs*0.08,by-bs*0.34);ctx.lineTo(bx+bs*0.32,by-bs*0.28);ctx.lineTo(bx+bs*0.24,by-bs*0.18);ctx.lineTo(bx+bs*0.04,by-bs*0.22);ctx.closePath();ctx.fill();
-      }else{
-        // 鸡: 小三角翅+鸡冠
-        ctx.fillStyle=this.color;ctx.globalAlpha=0.6;
-        [-1,1].forEach(dir=>{
-          ctx.beginPath();ctx.moveTo(bx+dir*bs*0.1,by-bs*0.1+dir*wingFlap*bs*0.2);
-          ctx.lineTo(bx+dir*bs*0.32,by-bs*0.15+dir*wingFlap*bs*0.3);ctx.lineTo(bx+dir*bs*0.22,by+bs*0.05);ctx.closePath();ctx.fill();
-        });
-        ctx.globalAlpha=1;
-        // 鸡冠(锯齿)
-        const combX=bx,combY=by-bs*0.38;
-        ctx.fillStyle='#e74c3c';ctx.beginPath();
-        ctx.moveTo(combX-bs*0.12,combY);ctx.lineTo(combX-bs*0.08,combY-bs*0.12);ctx.lineTo(combX-bs*0.02,combY-bs*0.03);
-        ctx.lineTo(combX+bs*0.04,combY-bs*0.14);ctx.lineTo(combX+bs*0.1,combY-bs*0.02);
-        ctx.lineTo(combX+bs*0.14,combY);ctx.lineTo(combX+bs*0.06,combY+bs*0.04);ctx.closePath();ctx.fill();
-        // 肉垂
-        ctx.beginPath();ctx.arc(bx+bs*0.04,by-bs*0.16,bs*0.06,0,Math.PI*2);ctx.fill();
-        // 三角喙
-        ctx.fillStyle='#f0a030';ctx.beginPath();
-        ctx.moveTo(bx+bs*0.1,by-bs*0.28);ctx.lineTo(bx+bs*0.28,by-bs*0.24);ctx.lineTo(bx+bs*0.1,by-bs*0.16);ctx.closePath();ctx.fill();
-      }
-      // 两节腿+爪
-      ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=1.5;ctx.lineCap='round';ctx.lineJoin='round';
-      [-1,1].forEach(dir=>{
-        const ux=bx+dir*bs*0.06,uy=by+bs*0.22,lx=ux+dir*bs*0.04,ly=uy+bs*0.1;
-        ctx.beginPath();ctx.moveTo(ux,uy);ctx.lineTo(lx,ly);ctx.stroke();
-        ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(lx+dir*bs*0.06,ly+bs*0.08);ctx.moveTo(lx,ly);ctx.lineTo(lx-dir*bs*0.06,ly+bs*0.08);ctx.stroke();
+      ctx.moveTo(bx-bw*0.6,by+bh*0.8);
+      ctx.quadraticCurveTo(bx-bw*1.05,by+bh*0.1,bx-bw*0.85,by-bh*0.5);
+      ctx.quadraticCurveTo(bx-bw*0.35,by-bh*0.85,bx+bw*0.35,by-bh*0.85);
+      ctx.quadraticCurveTo(bx+bw*0.85,by-bh*0.5,bx+bw*1.05,by+bh*0.1);
+      ctx.quadraticCurveTo(bx+bw*0.6,by+bh*0.8,bx+bw*0.3,by+bh*0.9);
+      ctx.quadraticCurveTo(bx-bw*0.3,by+bh*0.9,bx-bw*0.6,by+bh*0.8);
+      ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=2;ctx.stroke();
+      // 肩峰
+      const shgr=ctx.createRadialGradient(bx-bs*0.06,by-bh*0.6,bs*0.05,bx-bs*0.06,by-bh*0.6,bs*0.22);
+      shgr.addColorStop(0,'#b08050');shgr.addColorStop(1,'#8b6040');
+      ctx.fillStyle=shgr;ctx.beginPath();ctx.ellipse(bx-bs*0.08,by-bh*0.5,bs*0.2,bs*0.13,-0.15,0,Math.PI*2);ctx.fill();
+      // 头部
+      const hgr=ctx.createRadialGradient(bx-bs*0.04,by-bh*0.75,bs*0.02,bx,by-bh*0.7,bs*0.22);
+      hgr.addColorStop(0,'#c89868');hgr.addColorStop(1,'#8b6340');
+      ctx.fillStyle=hgr;ctx.beginPath();ctx.arc(bx,by-bh*0.7,bs*0.2,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=1.5;ctx.stroke();
+      // 耳朵(圆润三角)
+      ctx.fillStyle='#8b5a38';
+      [[-bs*0.12,-bh*0.88],[bs*0.10,-bh*0.88]].forEach(([ex,ey])=>{
+        ctx.beginPath();ctx.arc(bx+ex,by+ey,bs*0.08,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#d4a080';ctx.beginPath();ctx.arc(bx+ex,by+ey,bs*0.04,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#8b5a38';
       });
+      // 眼睛
+      ctx.fillStyle='#1a0a00';ctx.beginPath();ctx.arc(bx-bs*0.04,by-bh*0.74,bs*0.035,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(bx+bs*0.08,by-bh*0.74,bs*0.035,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(bx-bs*0.02,by-bh*0.76,bs*0.015,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(bx+bs*0.10,by-bh*0.76,bs*0.015,0,Math.PI*2);ctx.fill();
+      // 鼻子
+      ctx.fillStyle='#2a1000';ctx.beginPath();ctx.ellipse(bx+bs*0.02,by-bh*0.64,bs*0.05,bs*0.035,0,0,Math.PI*2);ctx.fill();
+      // 粗腿+爪
+      ctx.fillStyle='#7a4a28';
+      [[-bs*0.2,-bs*0.03,bs*0.12,bs*0.24]].forEach(lx=>{
+        ctx.beginPath();ctx.ellipse(bx+lx,by+bh*0.7,bs*0.12,bs*0.15,0,0,Math.PI*2);ctx.fill();
+        ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=1.5;ctx.stroke();
+        // 爪尖
+        ctx.fillStyle='#3a1800';
+        for(let c=-1;c<=1;c++){ctx.beginPath();ctx.arc(bx+lx+c*bs*0.05,by+bh*0.83,bs*0.025,0,Math.PI*2);ctx.fill();}
+        ctx.fillStyle='#7a4a28';
+      });
+      // 小圆尾
+      ctx.fillStyle='#6b3a20';ctx.beginPath();ctx.arc(bx+bw*0.5,by-bh*0.1,bs*0.08,0,Math.PI*2);ctx.fill();
+      // 狂暴状态
+      if(this.passives.some(p=>p.type==='rage')&&this.hp/this.maxHp<0.3){
+        ctx.strokeStyle='rgba(255,70,30,0.5)';ctx.lineWidth=2.5;ctx.setLineDash([2,3]);ctx.lineDashOffset=t/50;
+        ctx.beginPath();ctx.arc(bx,by-bh*0.3,bs*0.55,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+      }
+      return;
     }
 
-    // ===== 四足动物: 品种特化几何 =====
-    else{
-      const scaleAnim=1+this.scaleBob*2;
+    if(id==='wolf'){
+      // 🐺 狼: 流线型敏捷身材, 贝塞尔曲线
+      const wh=bs*0.26*breath,ww=bs*0.52;
+      const wgr=ctx.createLinearGradient(bx,by-wh,bx,by+wh);
+      wgr.addColorStop(0,'#d8d8d8');wgr.addColorStop(0.4,'#b0b0b0');wgr.addColorStop(1,'#606060');
+      ctx.fillStyle=wgr;
+      // 身体: 流线梭形
+      ctx.beginPath();
+      ctx.moveTo(bx,by-wh*1.0);
+      ctx.quadraticCurveTo(bx+ww*0.8,by-wh*0.2,bx+ww*0.65,by+wh*0.7);
+      ctx.quadraticCurveTo(bx+ww*0.2,by+wh*0.9,bx-ww*0.2,by+wh*0.9);
+      ctx.quadraticCurveTo(bx-ww*0.65,by+wh*0.7,bx-ww*0.8,by-wh*0.2);
+      ctx.quadraticCurveTo(bx-ww*0.1,by-wh*0.95,bx,by-wh*1.0);
+      ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.18)';ctx.lineWidth=1.8;ctx.stroke();
+      // 头部(尖吻)
+      const hwgr=ctx.createRadialGradient(bx,by-wh*0.9,bs*0.03,bx,by-wh*0.85,bs*0.18);
+      hwgr.addColorStop(0,'#e0e0e0');hwgr.addColorStop(1,'#909090');
+      ctx.fillStyle=hwgr;ctx.beginPath();ctx.ellipse(bx,by-wh*0.85,bs*0.15,bs*0.12,0,0,Math.PI*2);ctx.fill();
+      // 吻部
+      ctx.fillStyle='#c8c8c8';ctx.beginPath();ctx.moveTo(bx+bs*0.08,by-wh*0.82);ctx.quadraticCurveTo(bx+bs*0.22,by-wh*0.85,bx+bs*0.18,by-wh*0.75);
+      ctx.quadraticCurveTo(bx+bs*0.10,by-wh*0.72,bx+bs*0.03,by-wh*0.78);ctx.fill();
+      ctx.fillStyle='#111';ctx.beginPath();ctx.arc(bx+bs*0.16,by-wh*0.79,bs*0.025,0,Math.PI*2);ctx.fill();
+      // 尖三角耳
+      ctx.fillStyle='#a0a0a0';
+      [[-bs*0.1,-wh*0.95],[bs*0.02,-wh*0.93]].forEach(([ex,ey])=>{
+        ctx.beginPath();ctx.moveTo(bx+ex,by+ey);ctx.lineTo(bx+ex-bs*0.08,by+ey-bs*0.18);ctx.lineTo(bx+ex+bs*0.08,by+ey-bs*0.16);ctx.closePath();ctx.fill();
+        ctx.fillStyle='#d0a0a0';ctx.beginPath();ctx.moveTo(bx+ex-bs*0.02,by+ey-bs*0.02);ctx.lineTo(bx+ex-bs*0.05,by+ey-bs*0.12);ctx.lineTo(bx+ex+bs*0.04,by+ey-bs*0.11);ctx.closePath();ctx.fill();
+        ctx.fillStyle='#a0a0a0';
+      });
+      // 眼睛
+      ctx.fillStyle='#ffcc00';ctx.beginPath();ctx.arc(bx-bs*0.08,by-wh*0.89,bs*0.03,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(bx+bs*0.04,by-wh*0.87,bs*0.03,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#111';ctx.beginPath();ctx.arc(bx-bs*0.08,by-wh*0.89,bs*0.015,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(bx+bs*0.04,by-wh*0.87,bs*0.015,0,Math.PI*2);ctx.fill();
+      // 蓬尾(贝塞尔+动画摇摆)
+      const tailSway=Math.sin(t/400)*bs*0.12;
+      const tg=ctx.createLinearGradient(bx+ww*0.5,by-wh*0.6,bx+ww*1.1,by-wh*0.8);
+      tg.addColorStop(0,'#909090');tg.addColorStop(0.6,'#c0c0c0');tg.addColorStop(1,'#e8e8e8');
+      ctx.fillStyle=tg;
+      ctx.beginPath();ctx.moveTo(bx+ww*0.5,by-wh*0.1);
+      ctx.quadraticCurveTo(bx+ww*0.85,by-wh*0.3+tailSway,bx+ww*1.05,by-wh*0.6+tailSway*0.7);
+      ctx.quadraticCurveTo(bx+ww*0.95,by-wh*0.45+tailSway*0.5,bx+ww*0.55,by-wh*0.15);
+      ctx.fill();
+      // 细腿两节
+      ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=2.8;ctx.lineCap='round';
+      [[-bs*0.2,-bs*0.04,bs*0.08,bs*0.24]].forEach(lx=>{
+        ctx.beginPath();ctx.moveTo(bx+lx,by+wh*0.6);ctx.lineTo(bx+lx,by+wh+bs*0.12);ctx.stroke();
+      });
+      return;
+    }
 
-      if(id==='bear'){
-        // 棕熊: 梯形身体
-        const bw=bs*0.52*scaleAnim,bh=bs*0.36*scaleAnim;
-        const bearGrad=ctx.createLinearGradient(bx,by-bh,bx,by+bh);
-        bearGrad.addColorStop(0,'#9B7B5C');bearGrad.addColorStop(0.3,this.color);bearGrad.addColorStop(1,this.bodyColor);
-        ctx.fillStyle=bearGrad;
-        ctx.beginPath();ctx.moveTo(bx-bw*0.7,by+bh*0.7);ctx.lineTo(bx-bw*1.1,by-bh*0.4);ctx.lineTo(bx-bw*0.5,by-bh*0.9);
-        ctx.lineTo(bx+bw*0.5,by-bh*0.9);ctx.lineTo(bx+bw*1.1,by-bh*0.4);ctx.lineTo(bx+bw*0.7,by+bh*0.7);ctx.closePath();ctx.fill();
-        ctx.strokeStyle='rgba(0,0,0,0.25)';ctx.lineWidth=2;ctx.stroke();
-        // 肩峰
-        ctx.fillStyle='#7a5f3a';ctx.beginPath();ctx.ellipse(bx-bs*0.12,by-bh*0.5,bs*0.2,bs*0.12,-0.3,0,Math.PI*2);ctx.fill();
-        // 三角耳
-        ctx.fillStyle='#6a4a30';[-1,1].forEach(dir=>{ctx.beginPath();ctx.moveTo(bx+dir*bs*0.2,by-bh*0.8);ctx.lineTo(bx+dir*bs*0.28,by-bh*1.15);ctx.lineTo(bx+dir*bs*0.08,by-bh*0.85);ctx.closePath();ctx.fill();});
-        // 两节粗腿
-        ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=4.5;ctx.lineCap='round';
-        [-bs*0.22,-bs*0.06,bs*0.06,bs*0.22].forEach(lx=>{ctx.beginPath();ctx.moveTo(bx+lx,by+bh*0.6);ctx.lineTo(bx+lx,by+bh+bs*0.12);ctx.stroke();});
-        // 圆尾
-        ctx.fillStyle='rgba(0,0,0,0.2)';ctx.beginPath();ctx.arc(bx+bw*0.6,by-bh*0.1,bs*0.08,0,Math.PI*2);ctx.fill();
-      }else if(id==='wolf'){
-        // 狼: 菱形身体(棱角)
-        const ww=bs*0.44*scaleAnim,wh=bs*0.28*scaleAnim;
-        const wolfGrad=ctx.createLinearGradient(bx,by-wh,bx,by+wh);
-        wolfGrad.addColorStop(0,'#b0b0b0');wolfGrad.addColorStop(0.5,this.color);wolfGrad.addColorStop(1,'#707070');
-        ctx.fillStyle=wolfGrad;
-        ctx.beginPath();ctx.moveTo(bx,by-wh*1.1);ctx.lineTo(bx+ww,by-wh*0.2);ctx.lineTo(bx+ww*0.8,by+wh*0.8);
-        ctx.lineTo(bx-ww*0.8,by+wh*0.8);ctx.lineTo(bx-ww,by-wh*0.2);ctx.closePath();ctx.fill();
-        ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1.5;ctx.stroke();
-        // 下颌线
-        ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=1;
-        ctx.beginPath();ctx.moveTo(bx-bs*0.12,by-wh*0.6);ctx.lineTo(bx,by-wh*0.3);ctx.lineTo(bx+bs*0.12,by-wh*0.6);ctx.stroke();
-        // 三角尖耳
-        ctx.fillStyle='#909090';
-        ctx.beginPath();ctx.moveTo(bx-bs*0.18,by-wh*0.9);ctx.lineTo(bx-bs*0.32,by-wh*1.4);ctx.lineTo(bx-bs*0.06,by-wh*0.95);ctx.fill();
-        ctx.beginPath();ctx.moveTo(bx+bs*0.06,by-wh*0.9);ctx.lineTo(bx+bs*0.24,by-wh*1.4);ctx.lineTo(bx+bs*0.2,by-wh*0.9);ctx.fill();
-        // 蓬尾(折线)
-        ctx.fillStyle=this.color;ctx.globalAlpha=0.7;
-        ctx.beginPath();ctx.moveTo(bx+ww*0.7,by-wh*0.1);ctx.lineTo(bx+ww*1.2,by-wh*0.6);ctx.lineTo(bx+ww*0.9,by-wh*0.5);
-        ctx.lineTo(bx+ww*0.6,by-wh*0.15);ctx.closePath();ctx.fill();ctx.globalAlpha=1;
-        // 细腿两节
-        ctx.strokeStyle='rgba(0,0,0,0.25)';ctx.lineWidth=2.5;ctx.lineCap='round';
-        [-bs*0.22,-bs*0.07,bs*0.07,bs*0.22].forEach(lx=>{ctx.beginPath();ctx.moveTo(bx+lx,by+wh*0.6);ctx.lineTo(bx+lx,by+wh+bs*0.12);ctx.stroke();});
-      }else if(id==='bull'){
-        // 牛: 矩形+粗颈
-        const nw=bs*0.5*scaleAnim,nh=bs*0.34*scaleAnim;
-        const bullGrad=ctx.createLinearGradient(bx,by-nh,bx,by+nh);bullGrad.addColorStop(0,'#d4b892');bullGrad.addColorStop(1,this.bodyColor);
-        ctx.fillStyle=bullGrad;
-        ctx.beginPath();ctx.moveTo(bx-nw*0.9,by+nh*0.7);ctx.lineTo(bx-nw*1.1,by-nh*0.5);ctx.lineTo(bx-nw*0.4,by-nh*0.9);
-        ctx.lineTo(bx+nw*0.4,by-nh*0.9);ctx.lineTo(bx+nw*1.1,by-nh*0.5);ctx.lineTo(bx+nw*0.9,by+nh*0.7);ctx.closePath();ctx.fill();
-        ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=2;ctx.stroke();
-        // 弯角(折线弧)
-        ctx.strokeStyle='#e8e0d0';ctx.lineWidth=3.5;ctx.lineCap='round';
-        ctx.beginPath();ctx.moveTo(bx-bs*0.18,by-nh*0.8);ctx.quadraticCurveTo(bx-bs*0.35,by-nh*1.4,bx-bs*0.08,by-nh*1.15);ctx.stroke();
-        ctx.beginPath();ctx.moveTo(bx+bs*0.04,by-nh*0.8);ctx.quadraticCurveTo(bx+bs*0.22,by-nh*1.4,bx+bs*0.25,by-nh*1.1);ctx.stroke();
-        // 粗腿
-        ctx.strokeStyle='rgba(0,0,0,0.25)';ctx.lineWidth=3.5;ctx.lineCap='round';
-        [-bs*0.2,-bs*0.05,bs*0.08,bs*0.2].forEach(lx=>{ctx.beginPath();ctx.moveTo(bx+lx,by+nh*0.6);ctx.lineTo(bx+lx,by+nh+bs*0.1);ctx.stroke();});
-        // 细尾
-        ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(bx+nw*0.7,by-nh*0.1);ctx.quadraticCurveTo(bx+nw*1.1,by-nh*0.5,bx+nw*0.6,by+nh*0.3);ctx.stroke();
-      }else if(id==='lion'){
-        // 狮子: 多边形身+锯齿鬃毛
-        const lw=bs*0.46*scaleAnim,lh=bs*0.3*scaleAnim;
-        const lionGrad=ctx.createLinearGradient(bx,by-lh,bx,by+lh);lionGrad.addColorStop(0,'#f0c090');lionGrad.addColorStop(1,this.bodyColor);
-        ctx.fillStyle=lionGrad;
-        ctx.beginPath();ctx.moveTo(bx,by-lh*1.1);ctx.lineTo(bx+lw*0.9,by-lh*0.3);ctx.lineTo(bx+lw*0.7,by+lh*0.8);
-        ctx.lineTo(bx-lw*0.7,by+lh*0.8);ctx.lineTo(bx-lw*0.9,by-lh*0.3);ctx.closePath();ctx.fill();
-        ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=2;ctx.stroke();
-        // 锯齿鬃毛(多边形环)
-        const maneR=bs*0.28,maneX=bx,maneY=by-lh*0.7;
-        ctx.fillStyle='rgba(200,130,70,0.55)';
+    if(id==='bull'){
+      // 🐂 公牛: 雄壮矩形+粗颈+弯角
+      const nh=bs*0.34*breath,nw=bs*0.50;
+      const ngr=ctx.createLinearGradient(bx,by-nh,bx,by+nh);
+      ngr.addColorStop(0,'#e8c8a0');ngr.addColorStop(0.5,'#c89868');ngr.addColorStop(1,'#785030');
+      ctx.fillStyle=ngr;
+      // 矩形身体(贝塞尔)
+      ctx.beginPath();
+      ctx.moveTo(bx-nw*0.8,by+nh*0.75);
+      ctx.quadraticCurveTo(bx-nw*1.05,by+nh*0.1,bx-nw*0.95,by-nh*0.4);
+      ctx.quadraticCurveTo(bx-nw*0.35,by-nh*0.85,bx+nw*0.35,by-nh*0.85);
+      ctx.quadraticCurveTo(bx+nw*0.95,by-nh*0.4,bx+nw*1.05,by+nh*0.1);
+      ctx.quadraticCurveTo(bx+nw*0.8,by+nh*0.75,bx+nw*0.25,by+nh*0.85);
+      ctx.quadraticCurveTo(bx-nw*0.25,by+nh*0.85,bx-nw*0.8,by+nh*0.75);
+      ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.18)';ctx.lineWidth=2;ctx.stroke();
+      // 头部(方形)
+      const hngr=ctx.createLinearGradient(bx,by-nh*0.95,bx,by-nh*0.55);
+      hngr.addColorStop(0,'#e0c098');hngr.addColorStop(1,'#b08050');
+      ctx.fillStyle=hngr;ctx.beginPath();
+      ctx.moveTo(bx-bs*0.12,by-nh*0.58);ctx.lineTo(bx-bs*0.14,by-nh*0.92);ctx.quadraticCurveTo(bx,by-nh*1.02,bx+bs*0.14,by-nh*0.92);
+      ctx.lineTo(bx+bs*0.12,by-nh*0.58);ctx.closePath();ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.12)';ctx.lineWidth=1.5;ctx.stroke();
+      // 弯角(贝塞尔弧)
+      ctx.strokeStyle='#f0e8d8';ctx.lineWidth=3.5;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(bx-bs*0.10,by-nh*0.78);
+      ctx.bezierCurveTo(bx-bs*0.25,by-nh*1.2,bx-bs*0.15,by-nh*1.3,bx+bs*0.00,by-nh*1.1);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(bx+bs*0.06,by-nh*0.78);
+      ctx.bezierCurveTo(bx+bs*0.20,by-nh*1.15,bx+bs*0.28,by-nh*1.15,bx+bs*0.18,by-nh*0.98);ctx.stroke();
+      // 眼睛
+      ctx.fillStyle='#111';ctx.beginPath();ctx.arc(bx-bs*0.06,by-nh*0.78,bs*0.03,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(bx+bs*0.08,by-nh*0.78,bs*0.03,0,Math.PI*2);ctx.fill();
+      // 粗腿+蹄
+      ctx.fillStyle='#986840';
+      [[-bs*0.18,-bs*0.03,bs*0.10,bs*0.24]].forEach(lx=>{
+        ctx.beginPath();ctx.ellipse(bx+lx,by+nh*0.65,bs*0.12,bs*0.14,0,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#3a2810';ctx.beginPath();ctx.rect(bx+lx-bs*0.08,by+nh*0.73,bs*0.16,bs*0.06);ctx.fill();
+        ctx.fillStyle='#986840';
+      });
+      // 细尾+尾簇
+      const btlSway=Math.sin(t/500)*bs*0.08;
+      ctx.strokeStyle='#785030';ctx.lineWidth=2;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(bx+nw*0.7,by-nh*0.1);ctx.quadraticCurveTo(bx+nw*0.95,by-nh*0.45+btlSway,bx+nw*0.6,by+nh*0.3+btlSway);ctx.stroke();
+      ctx.fillStyle='#4a2810';ctx.beginPath();ctx.ellipse(bx+nw*0.6,by+nh*0.3+btlSway,bs*0.05,bs*0.08,0.3,0,Math.PI*2);ctx.fill();
+      return;
+    }
+
+    if(id==='eagle'){
+      // 🦅 鹰: 白头黑身+大翅+钩喙, 动态展翅
+      const eh=bs*0.30*breath,ew=bs*0.35;
+      // 身体(流线梭形)
+      const egr=ctx.createLinearGradient(bx,by-eh,bx,by+eh);
+      egr.addColorStop(0,'#f8f0e0');egr.addColorStop(0.3,'#e8d8c0');egr.addColorStop(0.7,'#5a3820');egr.addColorStop(1,'#3a2010');
+      ctx.fillStyle=egr;
+      ctx.beginPath();
+      ctx.moveTo(bx,by-eh*0.9);
+      ctx.quadraticCurveTo(bx+ew*0.7,by-eh*0.2,bx+ew*0.6,by+eh*0.65);
+      ctx.quadraticCurveTo(bx+ew*0.15,by+eh*0.8,bx-ew*0.15,by+eh*0.8);
+      ctx.quadraticCurveTo(bx-ew*0.6,by+eh*0.65,bx-ew*0.7,by-eh*0.2);
+      ctx.quadraticCurveTo(bx,by-eh*0.88,bx,by-eh*0.9);
+      ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1.5;ctx.stroke();
+      // 白色头部
+      const hdr=ctx.createRadialGradient(bx,by-eh*0.75,bs*0.02,bx,by-eh*0.7,bs*0.15);
+      hdr.addColorStop(0,'#ffffff');hdr.addColorStop(1,'#e8e0d0');
+      ctx.fillStyle=hdr;ctx.beginPath();ctx.arc(bx,by-eh*0.7,bs*0.13,0,Math.PI*2);ctx.fill();
+      // 大翅(贝塞尔曲线, 动态展翅)
+      const flapUp=wingFlap*bs*1.2;
+      ctx.fillStyle='#4a3020';
+      [-1,1].forEach(dir=>{
         ctx.beginPath();
-        for(let i=0;i<16;i++){
-          const a=Math.PI*2/16*i,pr=maneR*(0.7+(i%2)*0.4+Math.sin(t/500+i)*0.15);
+        ctx.moveTo(bx+dir*ew*0.3,by-eh*0.2);
+        ctx.quadraticCurveTo(bx+dir*ew*0.75,by-eh*0.4-flapUp*0.5,bx+dir*ew*1.2,by-eh*0.6-flapUp);
+        ctx.quadraticCurveTo(bx+dir*ew*0.9,by-eh*0.1-flapUp*0.3,bx+dir*ew*0.5,by+eh*0.2);
+        ctx.quadraticCurveTo(bx+dir*ew*0.4,by+eh*0.05,bx+dir*ew*0.3,by-eh*0.2);
+        ctx.fill();
+        // 次级飞羽
+        ctx.fillStyle='#3a2010';ctx.globalAlpha=0.4;
+        for(let fi=0;fi<4;fi++){
+          const fy=by-eh*0.45-flapUp*0.6+fi*bs*0.12;
+          ctx.beginPath();
+          ctx.moveTo(bx+dir*ew*0.5,fy);ctx.quadraticCurveTo(bx+dir*ew*0.8,fy+bs*0.03,bx+dir*ew*1.0,fy+bs*0.04);
+          ctx.quadraticCurveTo(bx+dir*ew*0.7,fy-bs*0.02,bx+dir*ew*0.5,fy-bs*0.02);ctx.fill();
+        }
+        ctx.globalAlpha=1;ctx.fillStyle='#4a3020';
+      });
+      // 钩喙三角
+      ctx.fillStyle='#f0b830';ctx.beginPath();
+      ctx.moveTo(bx+bs*0.06,by-eh*0.78);ctx.lineTo(bx+bs*0.2,by-eh*0.72);ctx.quadraticCurveTo(bx+bs*0.24,by-eh*0.66,bx+bs*0.16,by-eh*0.60);
+      ctx.lineTo(bx+bs*0.04,by-eh*0.64);ctx.closePath();ctx.fill();
+      // 眼睛
+      ctx.fillStyle='#111';ctx.beginPath();ctx.arc(bx-bs*0.01,by-eh*0.72,bs*0.035,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(bx-bs*0.02,by-eh*0.74,bs*0.015,0,Math.PI*2);ctx.fill();
+      // 爪
+      ctx.fillStyle='#f0b830';
+      [-1,1].forEach(dir=>{
+        const cx=bx+dir*bs*0.05,cy=by+eh*0.7;
+        ctx.beginPath();ctx.moveTo(cx-dir*bs*0.06,cy-bs*0.06);ctx.lineTo(cx+dir*bs*0.04,cy+bs*0.04);ctx.lineTo(cx-dir*bs*0.01,cy+bs*0.06);ctx.lineTo(cx-dir*bs*0.05,cy-bs*0.04);ctx.fill();
+        for(let ti=-1;ti<=1;ti++){ctx.beginPath();ctx.arc(cx+ti*bs*0.04,cy+bs*0.05,bs*0.018,0,Math.PI*2);ctx.fill();}
+      });
+      return;
+    }
+
+    if(id==='lion'){
+      // 🦁 狮子: 肌肉身材+动态鬃毛+尾簇
+      const lh=bs*0.32*breath,lw=bs*0.46;
+      const lgr=ctx.createLinearGradient(bx,by-lh,bx,by+lh);
+      lgr.addColorStop(0,'#f0c878');lgr.addColorStop(0.5,'#d4a050');lgr.addColorStop(1,'#885830');
+      ctx.fillStyle=lgr;
+      // 身体
+      ctx.beginPath();
+      ctx.moveTo(bx,by-lh*1.05);
+      ctx.quadraticCurveTo(bx+lw*0.7,by-lh*0.25,bx+lw*0.6,by+lh*0.75);
+      ctx.quadraticCurveTo(bx+lw*0.15,by+lh*0.9,bx-lw*0.15,by+lh*0.9);
+      ctx.quadraticCurveTo(bx-lw*0.6,by+lh*0.75,bx-lw*0.7,by-lh*0.25);
+      ctx.quadraticCurveTo(bx,by-lh*1.0,bx,by-lh*1.05);
+      ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.18)';ctx.lineWidth=2;ctx.stroke();
+      // 动态鬃毛(多层放射)
+      const maneX=bx,maneY=by-lh*0.72;
+      const maneLayers=3;
+      for(let ml=0;ml<maneLayers;ml++){
+        const mr=bs*0.24-ml*bs*0.04;
+        const mc=`rgba(180,${110-ml*15},${40+ml*15},${0.45-ml*0.12})`;
+        ctx.fillStyle=mc;
+        ctx.beginPath();
+        for(let i=0;i<18;i++){
+          const a=Math.PI*2/18*i;
+          const jitter=1+Math.sin(t/300+i*2.5+ml)*0.2;
+          const pr=mr*jitter*(0.75+(i%2)*0.25);
           const px=maneX+Math.cos(a)*pr*0.7,py=maneY+Math.sin(a)*pr*0.8;
           i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
         }
         ctx.closePath();ctx.fill();
-        ctx.fillStyle='rgba(180,110,50,0.5)';ctx.beginPath();ctx.arc(maneX,maneY,maneR*0.65,0,Math.PI*2);ctx.fill();
-        // 尾巴
-        ctx.strokeStyle='#c89060';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(bx+lw*0.7,by-lh*0.1);ctx.quadraticCurveTo(bx+lw*1.1,by-lh*0.5,bx+lw*0.6,by-lh*0.4);ctx.stroke();
-        ctx.fillStyle='#8a5530';ctx.beginPath();ctx.arc(bx+lw*0.6,by-lh*0.45,bs*0.08,0,Math.PI*2);ctx.fill();
-        // 腿
-        ctx.strokeStyle='rgba(0,0,0,0.25)';ctx.lineWidth=2.5;ctx.lineCap='round';
-        [-bs*0.2,-bs*0.05,bs*0.08,bs*0.2].forEach(lx=>{ctx.beginPath();ctx.moveTo(bx+lx,by+lh*0.6);ctx.lineTo(bx+lx,by+lh+bs*0.12);ctx.stroke();});
-      }else if(id==='elephant'){
-        // 大象: 矩形巨体
-        const ew=bs*0.55*scaleAnim,eh=bs*0.38*scaleAnim;
-        const eleGrad=ctx.createLinearGradient(bx,by-eh,bx,by+eh);eleGrad.addColorStop(0,'#c0b0a0');eleGrad.addColorStop(1,this.bodyColor);
-        ctx.fillStyle=eleGrad;
-        ctx.beginPath();ctx.moveTo(bx-ew*1.1,by+eh*0.6);ctx.lineTo(bx-ew*1.15,by-eh*0.6);ctx.lineTo(bx-ew*0.3,by-eh*1.0);
-        ctx.lineTo(bx+ew*0.3,by-eh*1.0);ctx.lineTo(bx+ew*1.15,by-eh*0.6);ctx.lineTo(bx+ew*1.1,by+eh*0.6);ctx.closePath();ctx.fill();
-        ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=2;ctx.stroke();
-        // 扇形大耳
-        ctx.fillStyle='rgba(144,128,112,0.5)';
-        ctx.beginPath();ctx.ellipse(bx-ew*0.5,by-eh*0.5,bs*0.24,bs*0.32,-0.3,0,Math.PI*2);ctx.fill();
-        ctx.beginPath();ctx.ellipse(bx+ew*0.4,by-eh*0.5,bs*0.24,bs*0.32,0.3,0,Math.PI*2);ctx.fill();
-        // 象鼻(折线)
-        ctx.strokeStyle='#b0a090';ctx.lineWidth=bs*0.1;ctx.lineCap='round';ctx.lineJoin='round';
-        ctx.beginPath();ctx.moveTo(bx+bs*0.08,by-eh*0.9);ctx.lineTo(bx+bs*0.12,by-eh*0.3);ctx.lineTo(bx+bs*0.06,by+eh*0.5);ctx.stroke();
-        // 象牙三角
-        ctx.fillStyle='#ffeedd';[-1,1].forEach(dir=>{ctx.beginPath();ctx.moveTo(bx+dir*bs*0.05,by-eh*0.5);ctx.lineTo(bx+dir*bs*0.18,by-eh*0.3);ctx.lineTo(bx+dir*bs*0.02,by-eh*0.1);ctx.closePath();ctx.fill();});
-        // 柱腿
-        ctx.fillStyle='rgba(0,0,0,0.15)';
-        [-ew*0.45,-ew*0.1,ew*0.15,ew*0.4].forEach(lx=>{ctx.beginPath();ctx.rect(bx+lx-ew*0.12,by+eh*0.5,ew*0.24,eh*0.45);ctx.fill();});
-        // 小尾
-        ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(bx+ew*0.9,by-eh*0.1);ctx.quadraticCurveTo(bx+ew*1.1,by-eh*0.3,bx+ew*0.8,by+eh*0.2);ctx.stroke();
-      }else{
-        // 通用四足(小鸡/子代等)
-        const gw=bs*0.44*scaleAnim,gh=bs*0.28*scaleAnim;
-        const grad=ctx.createLinearGradient(bx,by-gh,bx,by+gh);grad.addColorStop(0,this.color);grad.addColorStop(1,this.bodyColor||this.color);
-        ctx.fillStyle=grad;
-        ctx.beginPath();ctx.moveTo(bx,by-gh*1.0);ctx.lineTo(bx+gw*0.9,by-gh*0.3);ctx.lineTo(bx+gw*0.7,by+gh*0.8);ctx.lineTo(bx-gw*0.7,by+gh*0.8);ctx.lineTo(bx-gw*0.9,by-gh*0.3);ctx.closePath();ctx.fill();
-        ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=1.8;ctx.stroke();
-        ctx.strokeStyle='rgba(0,0,0,0.25)';ctx.lineWidth=2.5;ctx.lineCap='round';
-        [-bs*0.22,-bs*0.07,bs*0.07,bs*0.22].forEach(lx=>{ctx.beginPath();ctx.moveTo(bx+lx,by+gh*0.6);ctx.lineTo(bx+lx,by+gh+bs*0.08);ctx.stroke();});
       }
+      // 脸
+      const faceGr=ctx.createRadialGradient(maneX-bs*0.02,maneY-bs*0.03,bs*0.02,maneX,maneY,bs*0.16);
+      faceGr.addColorStop(0,'#f0d898');faceGr.addColorStop(1,'#c89850');
+      ctx.fillStyle=faceGr;ctx.beginPath();ctx.arc(maneX,maneY,bs*0.14,0,Math.PI*2);ctx.fill();
+      // 眼睛
+      ctx.fillStyle='#111';ctx.beginPath();ctx.arc(maneX-bs*0.06,maneY-bs*0.03,bs*0.03,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(maneX+bs*0.06,maneY-bs*0.03,bs*0.03,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#ffd700';ctx.beginPath();ctx.arc(maneX-bs*0.05,maneY-bs*0.04,bs*0.015,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(maneX+bs*0.07,maneY-bs*0.04,bs*0.015,0,Math.PI*2);ctx.fill();
+      // 鼻子
+      ctx.fillStyle='#4a2010';ctx.beginPath();ctx.moveTo(maneX,maneY+bs*0.02);ctx.lineTo(maneX-bs*0.04,maneY+bs*0.06);ctx.lineTo(maneX+bs*0.04,maneY+bs*0.06);ctx.closePath();ctx.fill();
+      // 腿
+      ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=2.5;ctx.lineCap='round';
+      [[-bs*0.18,-bs*0.04,bs*0.08,bs*0.2]].forEach(lx=>{
+        ctx.beginPath();ctx.moveTo(bx+lx,by+lh*0.6);ctx.lineTo(bx+lx,by+lh+bs*0.14);ctx.stroke();
+      });
+      // 尾巴+簇(贝塞尔动画)
+      const lsSway=Math.sin(t/380)*bs*0.1;
+      const tgL=ctx.createLinearGradient(bx+lw*0.5,by-lh*0.1,bx+lw*0.7,by-lh*0.5);
+      tgL.addColorStop(0,'#c89850');tgL.addColorStop(1,'#5a3010');
+      ctx.strokeStyle=tgL;ctx.lineWidth=2;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(bx+lw*0.55,by-lh*0.1);ctx.quadraticCurveTo(bx+lw*0.85,by-lh*0.5+lsSway,bx+lw*0.55,by-lh*0.4+lsSway*0.5);ctx.stroke();
+      ctx.fillStyle='#5a3010';ctx.beginPath();ctx.ellipse(bx+lw*0.55,by-lh*0.4+lsSway*0.5,bs*0.06,bs*0.09,0.4,0,Math.PI*2);ctx.fill();
+      return;
     }
+
+    if(id==='elephant'){
+      // 🐘 大象: 巨体+扇耳+象鼻+象牙
+      const eh=bs*0.36*breath,ew=bs*0.56;
+      const egr=ctx.createLinearGradient(bx,by-eh,bx,by+eh);
+      egr.addColorStop(0,'#c8b8a8');egr.addColorStop(0.5,'#a89888');egr.addColorStop(1,'#706050');
+      ctx.fillStyle=egr;
+      // 巨体(圆润矩形)
+      ctx.beginPath();
+      ctx.moveTo(bx-ew*0.85,by+eh*0.65);
+      ctx.quadraticCurveTo(bx-ew*1.02,by+eh*0.05,bx-ew*0.9,by-eh*0.45);
+      ctx.quadraticCurveTo(bx-ew*0.3,by-eh*0.85,bx+ew*0.3,by-eh*0.85);
+      ctx.quadraticCurveTo(bx+ew*0.9,by-eh*0.45,bx+ew*1.02,by+eh*0.05);
+      ctx.quadraticCurveTo(bx+ew*0.85,by+eh*0.65,bx+ew*0.2,by+eh*0.75);
+      ctx.quadraticCurveTo(bx-ew*0.2,by+eh*0.75,bx-ew*0.85,by+eh*0.65);
+      ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=2;ctx.stroke();
+      // 皮肤皱纹
+      ctx.strokeStyle='rgba(0,0,0,0.06)';ctx.lineWidth=1.2;
+      for(let w=0;w<3;w++){const wy=by-eh*0.2+w*bs*0.12;ctx.beginPath();ctx.moveTo(bx-ew*0.5,wy);ctx.quadraticCurveTo(bx,wy+3, bx+ew*0.5,wy);ctx.stroke();}
+      // 扇形大耳(贝塞尔+动画轻摆)
+      const earFlap=Math.sin(t/700)*0.08;
+      [-1,1].forEach(dir=>{
+        const earGr=ctx.createRadialGradient(bx+dir*ew*0.35,by-eh*0.4,bs*0.03,bx+dir*ew*0.35,by-eh*0.4,bs*0.26);
+        earGr.addColorStop(0,'#d0c0b0');earGr.addColorStop(0.7,'#b8a898');earGr.addColorStop(1,'#908070');
+        ctx.fillStyle=earGr;
+        ctx.beginPath();
+        ctx.ellipse(bx+dir*ew*0.35+earFlap*dir*10,by-eh*0.35,bs*0.22,bs*0.28,dir*0.25,0,Math.PI*2);ctx.fill();
+        ctx.strokeStyle='rgba(0,0,0,0.1)';ctx.lineWidth=1.5;ctx.stroke();
+        // 耳内血管纹
+        ctx.strokeStyle='rgba(0,0,0,0.05)';ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(bx+dir*ew*0.35,by-eh*0.5);ctx.quadraticCurveTo(bx+dir*ew*0.45,by-eh*0.3,bx+dir*ew*0.3,by-eh*0.12);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(bx+dir*ew*0.35,by-eh*0.45);ctx.quadraticCurveTo(bx+dir*ew*0.25,by-eh*0.25,bx+dir*ew*0.4,by-eh*0.15);ctx.stroke();
+      });
+      // 象鼻(贝塞尔曲线+动画摆动)
+      const trunkSway=Math.sin(t/550)*bs*0.08;
+      const tnGr=ctx.createLinearGradient(bx+bs*0.04,by-eh*0.7,bx+bs*0.02,by+eh*0.4);
+      tnGr.addColorStop(0,'#b8a898');tnGr.addColorStop(1,'#887868');
+      ctx.strokeStyle=tnGr;ctx.lineWidth=bs*0.11;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(bx+bs*0.04,by-eh*0.7);
+      ctx.quadraticCurveTo(bx+bs*0.06+trunkSway,by-eh*0.15,bx+bs*0.02+trunkSway*1.2,by+eh*0.4);
+      ctx.stroke();
+      ctx.lineWidth=bs*0.06;ctx.beginPath();ctx.moveTo(bx+bs*0.02+trunkSway*1.2,by+eh*0.4);ctx.quadraticCurveTo(bx-bs*0.02,by+eh*0.5,bx+bs*0.05,by+eh*0.45);ctx.stroke();
+      // 象牙(三角)
+      ctx.fillStyle='#fffef0';
+      [-1,1].forEach(dir=>{
+        ctx.beginPath();ctx.moveTo(bx+dir*bs*0.05,by-eh*0.45);ctx.quadraticCurveTo(bx+dir*bs*0.16,by-eh*0.3,bx+dir*bs*0.08,by-eh*0.12);
+        ctx.quadraticCurveTo(bx+dir*bs*0.02,by-eh*0.2,bx+dir*bs*0.01,by-eh*0.35);ctx.fill();
+      });
+      // 眼睛
+      ctx.fillStyle='#1a1a1a';ctx.beginPath();ctx.arc(bx-bs*0.03,by-eh*0.7,bs*0.035,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(bx-bs*0.04,by-eh*0.72,bs*0.012,0,Math.PI*2);ctx.fill();
+      // 柱腿
+      ctx.fillStyle='#988878';
+      [[-ew*0.4,-ew*0.08,ew*0.12,ew*0.36]].forEach(lx=>{
+        ctx.beginPath();ctx.ellipse(bx+lx,by+eh*0.6,bs*0.14,bs*0.18,0,0,Math.PI*2);ctx.fill();
+        ctx.strokeStyle='rgba(0,0,0,0.1)';ctx.lineWidth=1.5;ctx.stroke();
+        // 趾甲
+        ctx.fillStyle='#d0c8c0';
+        for(let t=0;t<3;t++){ctx.beginPath();ctx.arc(bx+lx+(t-1)*bs*0.06,by+eh*0.75,bs*0.03,0,Math.PI*2);ctx.fill();}
+        ctx.fillStyle='#988878';
+      });
+      // 小尾
+      ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=1.5;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(bx+ew*0.8,by-eh*0.1);ctx.quadraticCurveTo(bx+ew*1.0,by-eh*0.2,bx+ew*0.7,by+eh*0.1);ctx.stroke();
+      return;
+    }
+
+    // ===== 鸡(bird类): 圆润可爱+鸡冠+喙+爪 =====
+    if(bodyType==='bird'){
+      const ch=bs*0.32*breath,cw=bs*0.38;
+      // 羽毛渐层
+      const cgr=ctx.createLinearGradient(bx,by-ch,bx,by+ch);
+      if(id==='chicken'||this._chickPhase>=0){
+        cgr.addColorStop(0,'#fffef8');cgr.addColorStop(0.5,'#faf0d8');cgr.addColorStop(1,'#e8d0a0');
+      }else if(this.name&&this.name.includes('公鸡')){
+        cgr.addColorStop(0,'#f0c8a0');cgr.addColorStop(0.5,'#d08050');cgr.addColorStop(1,'#8a3020');
+      }else{
+        cgr.addColorStop(0,'#fffef5');cgr.addColorStop(0.5,'#faf0d0');cgr.addColorStop(1,'#e8d0a0');
+      }
+      ctx.fillStyle=cgr;
+      // 梨形身体(上窄下宽的贝塞尔椭圆)
+      ctx.beginPath();
+      ctx.moveTo(bx,by-ch*0.85);
+      ctx.quadraticCurveTo(bx+cw*0.9,by-ch*0.1,bx+cw*0.75,by+ch*0.7);
+      ctx.quadraticCurveTo(bx+cw*0.15,by+ch*0.85,bx-cw*0.15,by+ch*0.85);
+      ctx.quadraticCurveTo(bx-cw*0.75,by+ch*0.7,bx-cw*0.9,by-ch*0.1);
+      ctx.quadraticCurveTo(bx,by-ch*0.8,bx,by-ch*0.85);
+      ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.12)';ctx.lineWidth=1.8;ctx.stroke();
+      // 翅膀(圆润)
+      ctx.fillStyle=this.bodyColor;ctx.globalAlpha=0.5;
+      [-1,1].forEach(dir=>{
+        ctx.beginPath();
+        ctx.ellipse(bx+dir*bs*0.12,by-ch*0.05+wingFlap*bs*0.15,bs*0.16,bs*0.11,dir*0.3,0,Math.PI*2);ctx.fill();
+        ctx.strokeStyle='rgba(0,0,0,0.08)';ctx.lineWidth=1;ctx.stroke();
+      });
+      ctx.globalAlpha=1;
+      // 头部
+      ctx.fillStyle='#fffef8';ctx.beginPath();ctx.arc(bx,by-ch*0.68,bs*0.14,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.1)';ctx.lineWidth=1.2;ctx.stroke();
+      // 鸡冠(锯齿/波浪)
+      const combColor=this.name&&this.name.includes('公鸡')?'#c03020':'#e04030';
+      ctx.fillStyle=combColor;
+      ctx.beginPath();
+      const combX=bx,combY=by-ch*0.82;
+      ctx.moveTo(combX-bs*0.10,combY);
+      for(let c=0;c<5;c++){const cx=combX-bs*0.08+c*bs*0.04;ctx.quadraticCurveTo(cx,combY-bs*0.12,cx+bs*0.02,combY);}
+      ctx.quadraticCurveTo(combX+bs*0.10,combY+bs*0.04,combX-bs*0.04,combY+bs*0.03);
+      ctx.quadraticCurveTo(combX-bs*0.08,combY+bs*0.02,combX-bs*0.10,combY);
+      ctx.fill();
+      // 肉垂
+      ctx.beginPath();ctx.arc(bx+bs*0.02,by-ch*0.55,bs*0.05,0,Math.PI*2);ctx.fill();
+      // 三角喙
+      ctx.fillStyle='#f0a830';ctx.beginPath();
+      ctx.moveTo(bx+bs*0.06,by-ch*0.66);ctx.lineTo(bx+bs*0.18,by-ch*0.62);ctx.lineTo(bx+bs*0.06,by-ch*0.56);ctx.closePath();ctx.fill();
+      // 眼睛
+      ctx.fillStyle='#111';ctx.beginPath();ctx.arc(bx+bs*0.02,by-ch*0.70,bs*0.03,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(bx+bs*0.01,by-ch*0.71,bs*0.012,0,Math.PI*2);ctx.fill();
+      // 鸡爪(两节+趾)
+      ctx.strokeStyle='#e8a030';ctx.lineWidth=2;ctx.lineCap='round';ctx.lineJoin='round';
+      [-1,1].forEach(dir=>{
+        const lx=bx+dir*bs*0.06,ly=by+ch*0.7;
+        ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(lx+dir*bs*0.03,ly+bs*0.08);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(lx+dir*bs*0.03,ly+bs*0.08);ctx.lineTo(lx+dir*bs*0.04,ly+bs*0.14);ctx.moveTo(lx+dir*bs*0.03,ly+bs*0.08);ctx.lineTo(lx-dir*bs*0.02,ly+bs*0.13);ctx.moveTo(lx+dir*bs*0.03,ly+bs*0.08);ctx.lineTo(lx+dir*bs*0.07,ly+bs*0.12);ctx.stroke();
+      });
+      return;
+    }
+
+    // fallthrough: 通用小鸟(小鸡等)
+    const gh=bs*0.26*breath,gw=bs*0.32;
+    const ggr=ctx.createLinearGradient(bx,by-gh,bx,by+gh);
+    ggr.addColorStop(0,this.color);ggr.addColorStop(1,this.bodyColor||this.color);
+    ctx.fillStyle=ggr;
+    ctx.beginPath();
+    ctx.moveTo(bx,by-gh*0.85);
+    ctx.quadraticCurveTo(bx+gw*0.8,by-gh*0.1,bx+gw*0.6,by+gh*0.65);
+    ctx.quadraticCurveTo(bx+gw*0.1,by+gh*0.8,bx-gw*0.1,by+gh*0.8);
+    ctx.quadraticCurveTo(bx-gw*0.6,by+gh*0.65,bx-gw*0.8,by-gh*0.1);
+    ctx.quadraticCurveTo(bx,by-gh*0.8,bx,by-gh*0.85);
+    ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=2;ctx.lineCap='round';
+    [-bs*0.2,-bs*0.05,bs*0.08,bs*0.2].forEach(lx=>{ctx.beginPath();ctx.moveTo(bx+lx,by+gh*0.55);ctx.lineTo(bx+lx,by+gh+bs*0.08);ctx.stroke();});
   }
 
   draw(ctx){
     if(this.dead)return;
     const bScale=1+this.scaleBob+(this.windupTimer>0?(1-this.windupTimer/this.windupMax)*0.1:0);
     const renderY=this.y-this.drawY;
+
+    // ===== 道具Buff持续视觉反馈 =====
+    // 加速: 身后风线
+    if(this.speedBoostTimer>0&&!this.stunned){
+      const spd=Math.hypot(this.vx,this.vy)||1;
+      const nx=-(this.vx/spd),ny=-(this.vy/spd);
+      ctx.strokeStyle='rgba(255,220,60,0.5)';ctx.lineWidth=2;ctx.lineCap='round';
+      for(let i=0;i<3;i++){
+        const lx=this.x+nx*(this.size*0.6+i*10)+ny*(i-1)*4,ly=renderY+ny*(this.size*0.6+i*10)-nx*(i-1)*4;
+        ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(lx+nx*8,ly+ny*8);ctx.stroke();
+      }
+    }
+    // 加攻: 红色光晕
+    if(this.dmgBoostTimer>0&&!this.stunned){
+      const pa=Date.now()/200;
+      ctx.strokeStyle='rgba(255,100,20,0.4)';ctx.lineWidth=3;ctx.setLineDash([3,5]);ctx.lineDashOffset=pa*10;
+      ctx.beginPath();ctx.arc(this.x,renderY,this.size+5,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+    }
+    // 冻结: 冰晶覆层
+    if(this._frozen&&this.stunned){
+      ctx.fillStyle='rgba(100,200,255,0.3)';ctx.beginPath();ctx.arc(this.x,renderY,this.size+3,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='rgba(200,240,255,0.6)';ctx.lineWidth=2.5;
+      for(let i=0;i<3;i++){const a=Date.now()/300+i*Math.PI*2/3;ctx.beginPath();ctx.moveTo(this.x,renderY);ctx.lineTo(this.x+Math.cos(a)*(this.size+8),renderY+Math.sin(a)*(this.size+8));ctx.stroke();}
+    }
+    // 闪烁反馈(刚拾取道具)
+    if(this._healFlash>0){ctx.strokeStyle='rgba(255,80,80,0.5)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(this.x,renderY,this.size+8,0,Math.PI*2);ctx.stroke();}
+    if(this._speedFlash>0){ctx.strokeStyle='rgba(255,220,60,0.5)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(this.x,renderY,this.size+6,0,Math.PI*2);ctx.stroke();}
+    if(this._powerFlash>0){ctx.strokeStyle='rgba(255,100,20,0.5)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(this.x,renderY,this.size+6,0,Math.PI*2);ctx.stroke();}
+    if(this._shieldFlash>0){ctx.strokeStyle='rgba(68,170,255,0.5)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(this.x,renderY,this.size+8,0,Math.PI*2);ctx.stroke();}
+
     if(this.hibernating){ctx.font='12px serif';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText('💤',this.x,renderY-this.size-16);}
     if(this.stunned)for(let i=0;i<3;i++){const a=(Date.now()/300+i*Math.PI*2/3)%(Math.PI*2);ctx.font='11px serif';ctx.fillText('⭐',this.x+Math.cos(a)*(this.size+9)-5,renderY+Math.sin(a)*(this.size+5)-7);}
     if(this.shieldActive){
-      const pulse=1+Math.sin(Date.now()/250)*0.15;
-      ctx.strokeStyle='rgba(107,142,107,0.55)';ctx.lineWidth=3*pulse;ctx.beginPath();ctx.arc(this.x,renderY,(this.size+8)*pulse,0,Math.PI*2);ctx.stroke();
-      ctx.strokeStyle='rgba(107,142,107,0.25)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(this.x,renderY,(this.size+16)*pulse,0,Math.PI*2);ctx.stroke();
+      const pulse=1+Math.sin(Date.now()/200)*0.18;
+      ctx.strokeStyle='rgba(68,170,255,0.55)';ctx.lineWidth=3.5*pulse;ctx.beginPath();ctx.arc(this.x,renderY,(this.size+10)*pulse,0,Math.PI*2);ctx.stroke();
+      ctx.strokeStyle='rgba(68,170,255,0.25)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(this.x,renderY,(this.size+18)*pulse,0,Math.PI*2);ctx.stroke();
     }
     if(this.critNext){ctx.strokeStyle='rgba(255,215,0,0.5)';ctx.lineWidth=2.5;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(this.x,renderY,this.size+6,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
     if(this.windupTimer>0){const wp=1-this.windupTimer/this.windupMax;ctx.font=`${18+wp*20}px serif`;ctx.fillStyle='#ff6b6b';ctx.textAlign='center';ctx.fillText('🐾',this.x,renderY-this.size*0.7-wp*25);}
     if(this.diveTimer>0&&this.diveTimer/this.diveMax<0.65){const spd=Math.hypot(this.vx,this.vy);ctx.strokeStyle='rgba(135,206,235,0.5)';ctx.lineWidth=2;for(let i=0;i<3;i++){const lx=this.x-this.vx/spd*(this.size+10+i*8),ly=renderY-this.vy/spd*(this.size+10+i*8);ctx.beginPath();ctx.moveTo(lx-5,ly);ctx.lineTo(lx+5,ly);ctx.stroke();}}
-    if(this.passives.some(p=>p.type==='rage')&&this.hp/this.maxHp<0.3){ctx.strokeStyle='rgba(255,70,40,0.6)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(this.x,renderY,this.size+6,0,Math.PI*2);ctx.stroke();}
     if(this.hopActive){ctx.strokeStyle='rgba(205,133,63,0.5)';ctx.lineWidth=2;ctx.setLineDash([3,3]);ctx.beginPath();ctx.arc(this.x,renderY,this.size+5,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
 
     this.drawBody(ctx,renderY,bScale);
@@ -825,6 +1157,10 @@ class Animal{
     if(this.slowed){ctx.font='9px serif';ctx.fillStyle='#5dade2';ctx.fillText('🐌',this.x+this.size*0.5,renderY-5);}
     if(this.dotEffects.length>0){ctx.font='9px serif';ctx.fillStyle='#e74c3c';ctx.fillText('💔',this.x-this.size*0.5,renderY-3);}
     if(this.grudgeStacks>=3){ctx.font='9px serif';ctx.fillStyle='#ff6600';ctx.fillText('💢'.repeat(Math.min(5,this.grudgeStacks)),this.x-this.size*0.4,renderY+this.size*0.5);}
+    // 道具buff倒计时显示
+    if(this.speedBoostTimer>0){ctx.font='bold 8px "PingFang SC"';ctx.fillStyle='#ffdd44';ctx.fillText('⚡'+(this.speedBoostTimer/1000).toFixed(1)+'s',this.x,renderY-this.size*0.7);}
+    if(this.dmgBoostTimer>0){ctx.font='bold 8px "PingFang SC"';ctx.fillStyle='#ff6600';ctx.fillText('💪'+(this.dmgBoostTimer/1000).toFixed(1)+'s',this.x,renderY-this.size*0.7-10);}
+    if(this.shieldActive){ctx.font='bold 8px "PingFang SC"';ctx.fillStyle='#44aaff';ctx.fillText('🛡️'+(this.shieldTimer/1000).toFixed(1)+'s',this.x,renderY-this.size*0.7-(this.dmgBoostTimer>0?20:0));}
   }
 }
 
@@ -856,12 +1192,12 @@ class Egg{
 // ==================== 特效系统 ====================
 function spawnSpark(x,y,count,life,colors,lifeMs,vel={vx:0,vy:0}){for(let i=0;i<count;i++){const a=Math.random()*Math.PI*2;const sp=3+Math.random()*life;effects.push({type:'spark',x,y,life:lifeMs,age:0,dead:false,data:{dx:Math.cos(a)*sp,dy:Math.sin(a)*sp,size:2+Math.random()*2,vx:vel.vx||0,vy:vel.vy||0,color:colors[Math.floor(Math.random()*colors.length)]}});}}
 function spawnDust(x,y,radius,color,lifeMs,vel={vx:0,vy:0}){effects.push({type:'dust',x,y,life:lifeMs,age:0,dead:false,data:{radius,color,vx:vel.vx||0,vy:vel.vy||0}});}
-function spawnFX(type,x,y,data,color,scale=1){const life=type==='ring'?(data.life||600):type==='projectile'?1500:900;effects.push({type,x,y,data,color,scale,life,age:0,dead:false});}
+function spawnFX(type,x,y,data,color,scale=1){const life=type==='ring'?(data.life||600):type==='projectile'?1500:1000;effects.push({type,x,y,data,color,scale,life,age:0,dead:false});}
 
 function updateFX(dt){
   effects.forEach(e=>{e.age+=dt;if(e.age>=e.life){e.dead=true;return;}
     switch(e.type){
-      case'damage':e.y-=32*dt/1000;break;case'text':e.y-=22*dt/1000;break;
+      case'damage':e.y-=32*dt/1000;break;case'text':e.y-=24*dt/1000;break;
       case'spark':if(e.data.vx!==undefined||e.data.vy!==undefined){e.x+=(e.data.vx||0)*dt/1000;e.y+=(e.data.vy||0)*dt/1000;}break;
       case'dust':if(e.data.vx!==undefined||e.data.vy!==undefined){e.x+=(e.data.vx||0)*dt/1000;e.y+=(e.data.vy||0)*dt/1000;}break;
       case'ring':break;
@@ -877,14 +1213,24 @@ function updateFX(dt){
 
 function drawFX(ctx){
   groundCracks.forEach(c=>{const a=1-c.age/c.life;ctx.strokeStyle=`rgba(139,90,43,${a*0.6})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(c.x,c.y);ctx.lineTo(c.x+Math.cos(c.angle)*c.len,c.y+Math.sin(c.angle)*c.len);ctx.stroke();});
-  // 火山喷发
-  mapHazards.forEach(h=>{const a=1-h.age/h.life;const g=ctx.createRadialGradient(h.x,h.y,0,h.x,h.y,h.radius*a);g.addColorStop(0,'rgba(255,100,20,0.5)');g.addColorStop(1,'rgba(255,50,0,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(h.x,h.y,h.radius*a,0,Math.PI*2);ctx.fill();});
-  // 冰原雪花
-  mapParticles.forEach(p=>{const a=1-p.age/p.life;ctx.fillStyle=`rgba(255,255,255,${a*0.6})`;ctx.beginPath();ctx.arc(p.x,p.y,2,0,Math.PI*2);ctx.fill();});
+  mapHazards.forEach(h=>{
+    if(h.phase==='warning'){
+      const a=1-h.age/h.life;const wAlpha=0.3+Math.sin(Date.now()/100)*0.3;
+      ctx.fillStyle=`rgba(255,80,0,${wAlpha})`;ctx.beginPath();ctx.arc(h.x,h.y,h.radius*0.3,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle=`rgba(255,120,20,${wAlpha*1.5})`;ctx.lineWidth=2.5;ctx.setLineDash([4,4]);ctx.lineDashOffset=Date.now()/50;
+      ctx.beginPath();ctx.arc(h.x,h.y,h.radius*0.6,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+    }else{
+      const a=1-h.age/h.life;
+      const g=ctx.createRadialGradient(h.x,h.y,0,h.x,h.y,h.radius*a);
+      g.addColorStop(0,'rgba(255,180,40,0.7)');g.addColorStop(0.5,'rgba(255,60,10,0.4)');g.addColorStop(1,'rgba(255,20,0,0)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(h.x,h.y,h.radius*a,0,Math.PI*2);ctx.fill();
+    }
+  });
+  mapParticles.forEach(p=>{const a=1-p.age/p.life;ctx.fillStyle=`rgba(255,255,255,${a*0.5})`;ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,Math.PI*2);ctx.fill();});
   effects.forEach(e=>{const a=Math.max(0,1-e.age/e.life);ctx.globalAlpha=a;
     switch(e.type){
-      case'damage':ctx.font=`bold ${Math.round(16*e.scale)}px "PingFang SC"`;ctx.fillStyle=e.color;ctx.textAlign='center';ctx.fillText(`-${e.data}`,e.x,e.y);break;
-      case'text':ctx.font='bold 12px "PingFang SC"';ctx.fillStyle=e.color;ctx.textAlign='center';ctx.fillText(e.data,e.x,e.y);break;
+      case'damage':ctx.font=`bold ${Math.round(18*e.scale)}px "PingFang SC"`;ctx.fillStyle=e.color;ctx.textAlign='center';ctx.fillText(`-${e.data}`,e.x,e.y);break;
+      case'text':ctx.font=`bold ${Math.round(14*e.scale)}px "PingFang SC"`;ctx.fillStyle=e.color;ctx.textAlign='center';ctx.fillText(e.data,e.x,e.y);break;
       case'projectile':ctx.font='16px serif';ctx.textAlign='center';ctx.fillText(e.data.emoji,e.x,e.y);break;
       case'spark':{const sp=1-e.age/e.life;const sx=e.x+e.data.dx*(1-sp),sy=e.y+e.data.dy*(1-sp),ex=e.x+e.data.dx,ey=e.y+e.data.dy;ctx.strokeStyle=e.data.color;ctx.lineWidth=e.data.size*sp;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();ctx.fillStyle=e.data.color;ctx.globalAlpha=a*0.8;ctx.beginPath();ctx.arc(ex,ey,e.data.size*0.6,0,Math.PI*2);ctx.fill();}break;
       case'dust':{const dprog=e.age/e.life,dr=e.data.radius*(0.5+0.5*dprog);const dgrad=ctx.createRadialGradient(e.x,e.y,dr*0.1,e.x,e.y,dr);dgrad.addColorStop(0,e.data.color);dgrad.addColorStop(1,'transparent');ctx.fillStyle=dgrad;ctx.globalAlpha=a*0.6;ctx.beginPath();ctx.arc(e.x,e.y,dr,0,Math.PI*2);ctx.fill();}break;
@@ -892,7 +1238,6 @@ function drawFX(ctx){
     }
     ctx.globalAlpha=1;
   });
-  // 跳步尘土
   animals.forEach(a=>{if(!a.dead&&a.hopActive&&Math.random()<0.6){ctx.globalAlpha=0.5;const dg=ctx.createRadialGradient(a.x,a.y+a.size*0.35,2,a.x,a.y+a.size*0.35,8);dg.addColorStop(0,'#c4a882');dg.addColorStop(1,'transparent');ctx.fillStyle=dg;ctx.beginPath();ctx.arc(a.x-a.vx*0.15+(Math.random()-0.5)*14,a.y+a.size*0.35+(Math.random()-0.5)*10,5+Math.random()*8,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}});
 }
 
@@ -931,13 +1276,13 @@ function loop(ts){
     // 道具拾取
     for(const it of items){if(it.dead)continue;for(const a of alive){if(Math.hypot(a.x-it.x,a.y-(it.y+it.bob))<a.size+14){it.type.apply(a);it.dead=true;break;}}}
 
-    // 狮子威慑(触发逃脱的动物跑向远离狮子的方向)
+    // 狮子威慑
     alive.forEach(a=>{const intim=a.passives.find(p=>p.type==='intimidate');if(!intim||a.stunned)return;const foes=alive.filter(e=>!e.dead&&e!==a&&!e.stunned&&Math.hypot(e.x-a.x,e.y-a.y)<intim.radius);foes.forEach(f=>{if(Math.random()<intim.fleeChance*dt/1000){const dx=f.x-a.x,dy=f.y-a.y,dist=Math.hypot(dx,dy)||1;f.vx=(dx/dist)*f.speed*70;f.vy=(dy/dist)*f.speed*60;f.dirTimer=DIR_MIN+Math.random()*1000;spawnFX('text',f.x,f.y-16,'逃跑!','#e8a87c');}});});
 
     // 大象践踏
     alive.forEach(a=>{const tram=a.passives.find(p=>p.type==='trample');if(!tram||a.stunned)return;const victims=alive.filter(e=>!e.dead&&e!==a&&e.size<a.size*0.7&&Math.hypot(e.x-a.x,e.y-a.y)<tram.radius);victims.forEach(v=>{v.hp-=tram.dps*dt/1000;v.flashTimer=50;if(v.hp<=0){v.hp=0;v.dead=true;}});});
 
-    // 碰撞+攻击(所有不同team互打)
+    // 碰撞+攻击
     for(let i=0;i<alive.length;i++){
       for(let j=i+1;j<alive.length;j++){
         const a=alive[i],b=alive[j];if(a.team===b.team)continue;
@@ -964,15 +1309,9 @@ function loop(ts){
     const al=animals.filter(a=>!a.dead);
     const hasEgg=eggs.some(e=>!e.dead);
     if(al.length<=1&&!hasEgg){gameState='ended';winner=al.length===1?al[0]:null;document.getElementById('bf').disabled=false;}
-    else if(al.length===0&&hasEgg){
-      // 只剩蛋，等蛋孵化
-      // 检查是否所有蛋都死了
-      const totalEggs=eggs.length,totalAnimals=animals.length;
-      if(totalEggs===0&&totalAnimals===0){gameState='ended';winner=null;}
-    }
+    else if(al.length===0&&hasEgg){const tE=eggs.length,tA=animals.length;if(tE===0&&tA===0){gameState='ended';winner=null;}}
   }
 
-  // 绘制
   eggs.forEach(e=>e.draw(ctx));
   animals.forEach(a=>a.draw(ctx));
   items.forEach(it=>it.draw(ctx));
@@ -997,7 +1336,6 @@ const CIRCLES=['①','②','③','④','⑤','⑥'];
 function populateUI(){
   const asel=document.getElementById('asel'),keys=Object.keys(ANIMALS);
   asel.innerHTML='';keys.forEach(k=>{const a=ANIMALS[k];asel.innerHTML+=`<option value="${k}">${a.emoji}${a.name}</option>`;});
-  // 地图选择器
   const msel=document.getElementById('msel');
   msel.innerHTML='';Object.keys(MAPS).forEach(k=>{msel.innerHTML+=`<option value="${k}">${MAPS[k].name}</option>`;});
   msel.value='colosseum';
@@ -1008,25 +1346,18 @@ function renderTags(){
   if(selectedAnimals.length===0){container.innerHTML='<span class="mute-tag">未选择动物(最少2只)</span>';return;}
   container.innerHTML=selectedAnimals.map((k,i)=>{
     const a=ANIMALS[k];let name=a.name;
-    // 同种动物加编号
     const sameKind=selectedAnimals.filter(x=>x===k).length;
     if(sameKind>1){let idx=0;for(let j=0;j<=i;j++)if(selectedAnimals[j]===k)idx++;name=a.name+CIRCLES[idx-1];}
     return `<span class="tag" onclick="removeAnimal(${i})">${a.emoji}${name}<span class="x">×</span></span>`;
   }).join('');
 }
 
-function addAnimal(){
-  if(selectedAnimals.length>=6)return;
-  const k=document.getElementById('asel').value;
-  selectedAnimals.push(k);
-  renderTags();
-}
-
+function addAnimal(){if(selectedAnimals.length>=6)return;const k=document.getElementById('asel').value;selectedAnimals.push(k);renderTags();}
 function removeAnimal(i){selectedAnimals.splice(i,1);renderTags();}
 
 function randBattle(){
   const keys=Object.keys(ANIMALS);
-  const count=2+Math.floor(Math.random()*5); // 2-6只
+  const count=2+Math.floor(Math.random()*5);
   selectedAnimals=[];
   for(let i=0;i<count;i++)selectedAnimals.push(keys[Math.floor(Math.random()*keys.length)]);
   renderTags();
@@ -1040,8 +1371,7 @@ function startBattle(){
   const count=selectedAnimals.length;
   arenaScale=getArenaScale(count);
   resize(arenaScale);
-  initGrass(); // 重新生成草地
-  // 统计同种动物编号
+  initGrass();
   const nameCount={};
   animals=[];
   const cx=arenaL+(arenaR-arenaL)/2,cy=arenaT+(arenaB-arenaT)/2;
@@ -1054,7 +1384,6 @@ function startBattle(){
     if(sameKind>1)dn=cfg.name+CIRCLES[nameCount[k]-1];
     const a=new Animal(cfg,0,i);
     a.displayName=dn;a.name=dn;
-    // 圆形分布
     const angle=Math.PI*2/count*i-Math.PI/2;
     a.x=cx+Math.cos(angle)*spawnR;a.y=cy+Math.sin(angle)*spawnR*0.7;
     animals.push(a);
@@ -1080,10 +1409,8 @@ document.getElementById('bx').addEventListener('click',resetBattle);
 document.getElementById('br').addEventListener('click',()=>{randBattle();resetBattle();});
 document.getElementById('badd').addEventListener('click',addAnimal);
 document.querySelectorAll('.speed-btn').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.speed-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');gameSpeed=parseInt(b.dataset.s);}));
-document.addEventListener('keydown',e=>{switch(e.key.toLowerCase()){case' ':e.preventDefault();if(gameState==='fighting')resetBattle();startBattle();break;case'r':resetBattle();break;case'f':randSel();break;case'1':setSpd(1);break;case'2':setSpd(2);break;case'3':setSpd(3);break;case'4':setSpd(4);break;case'6':setSpd(6);break;}});
+document.addEventListener('keydown',e=>{switch(e.key.toLowerCase()){case' ':e.preventDefault();if(gameState==='fighting')resetBattle();startBattle();break;case'r':resetBattle();break;case'f':randBattle();resetBattle();break;case'1':setSpd(1);break;case'2':setSpd(2);break;case'3':setSpd(3);break;case'4':setSpd(4);break;case'6':setSpd(6);break;}});
 function setSpd(s){gameSpeed=s;document.querySelectorAll('.speed-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.s)===s));}
-function randSel(){const keys=Object.keys(ANIMALS);document.getElementById('ls').value=keys[Math.floor(Math.random()*keys.length)];document.getElementById('rs').value=keys[Math.floor(Math.random()*keys.length)];}
-
 frameId=requestAnimationFrame(loop);
 </script>
 </body>
