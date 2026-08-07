@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>动物大战 v3.2</title>
+<title>动物大战 v3.3</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#3a2f28;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:'PingFang SC','Microsoft YaHei',sans-serif;user-select:none;-webkit-user-select:none;padding:3px;touch-action:manipulation}
@@ -35,7 +35,7 @@ body{background:#3a2f28;display:flex;flex-direction:column;align-items:center;mi
 </style>
 </head>
 <body>
-<div class="title">⚔️ 动物大战 v3.2</div>
+<div class="title">⚔️ 动物大战 v3.3</div>
 <canvas id="game"></canvas>
 <div id="toast" class="toast hidden"></div>
 <div class="comment-bar" id="commentBar"><span class="comment-item">选择动物，点击开始对战</span></div>
@@ -61,7 +61,7 @@ body{background:#3a2f28;display:flex;flex-direction:column;align-items:center;mi
     <button class="speed-btn" data-s="8">4x</button>
   </div>
 </div>
-<div class="info">v3.2 · 10种动物 · 空格开始 R重置 F随机 数字调速</div>
+<div class="info">v3.3 · 10种动物 · 空格开始 R重置 F随机 数字调速</div>
 
 <script>
 // ==================== 画布 ====================
@@ -639,7 +639,7 @@ class Animal{
       const bullCol=`rgb(${Math.round(200+ragePct*55)},${Math.round(152-ragePct*110)},${Math.round(104-ragePct*80)})`,darkCol=`rgb(${Math.round(120-ragePct*50)},${Math.round(75-ragePct*45)},${Math.round(45-ragePct*25)})`;
       const ngr=ctx.createLinearGradient(bx,by-nh,bx,by+nh);ngr.addColorStop(0,bullCol);ngr.addColorStop(0.5,`rgb(${Math.round(184-ragePct*70)},${Math.round(104-ragePct*60)},${Math.round(64-ragePct*35)})`);ngr.addColorStop(1,darkCol);
       ctx.fillStyle=ngr;ctx.beginPath();ctx.moveTo(bx-nw*0.85,by+nh*0.72);ctx.quadraticCurveTo(bx-nw*1.08,by+nh*0.08,bx-nw*0.98,by-nh*0.42);ctx.quadraticCurveTo(bx-nw*0.38,by-nh*0.88,bx+nw*0.38,by-nh*0.88);ctx.quadraticCurveTo(bx+nw*0.98,by-nh*0.42,bx+nw*1.08,by+nh*0.08);ctx.quadraticCurveTo(bx+nw*0.85,by+nh*0.72,bx+nw*0.28,by+nh*0.82);ctx.quadraticCurveTo(bx-nw*0.28,by+nh*0.82,bx-nw*0.85,by+nh*0.72);ctx.fill();ctx.strokeStyle='rgba(0,0,0,0.22)';ctx.lineWidth=2.2;ctx.stroke();
-      ctx.strokeStyle='rgba(0,0,0,0.1)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(bx-bw*0.2,by-nh*0.5);ctx.quadraticCurveTo(bx,by-nh*0.6,bx+bw*0.2,by-nh*0.5);ctx.stroke();
+      ctx.strokeStyle='rgba(0,0,0,0.1)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(bx-nw*0.2,by-nh*0.5);ctx.quadraticCurveTo(bx,by-nh*0.6,bx+nw*0.2,by-nh*0.5);ctx.stroke();
       const hngr=ctx.createLinearGradient(bx,by-nh*0.95,bx,by-nh*0.55);hngr.addColorStop(0,'#e0c098');hngr.addColorStop(1,bullCol);ctx.fillStyle=hngr;ctx.beginPath();ctx.moveTo(bx-bs*0.14,by-nh*0.55);ctx.lineTo(bx-bs*0.16,by-nh*0.95);ctx.quadraticCurveTo(bx,by-nh*1.05,bx+bs*0.16,by-nh*0.95);ctx.lineTo(bx+bs*0.14,by-nh*0.55);ctx.closePath();ctx.fill();
       const hornGlow=ragePct>0.2?`rgba(255,${Math.round(180-ragePct*100)},${Math.round(30-ragePct*20)},${0.6+ragePct})`:'#f0e8d8';
       ctx.strokeStyle=hornGlow;ctx.lineWidth=4;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(bx-bs*0.10,by-nh*0.78);ctx.bezierCurveTo(bx-bs*0.28,by-nh*1.25,bx-bs*0.18,by-nh*1.35,bx+bs*0.02,by-nh*1.15);ctx.stroke();ctx.beginPath();ctx.moveTo(bx+bs*0.06,by-nh*0.78);ctx.bezierCurveTo(bx+bs*0.22,by-nh*1.2,bx+bs*0.32,by-nh*1.2,bx+bs*0.20,by-nh*1.0);ctx.stroke();
