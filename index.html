@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>动物大战 v3.3</title>
+<title>动物大战 v3.4</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#3a2f28;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:'PingFang SC','Microsoft YaHei',sans-serif;user-select:none;-webkit-user-select:none;padding:3px;touch-action:manipulation}
@@ -35,7 +35,7 @@ body{background:#3a2f28;display:flex;flex-direction:column;align-items:center;mi
 </style>
 </head>
 <body>
-<div class="title">⚔️ 动物大战 v3.3</div>
+<div class="title">⚔️ 动物大战 v3.4</div>
 <canvas id="game"></canvas>
 <div id="toast" class="toast hidden"></div>
 <div class="comment-bar" id="commentBar"><span class="comment-item">选择动物，点击开始对战</span></div>
@@ -61,7 +61,7 @@ body{background:#3a2f28;display:flex;flex-direction:column;align-items:center;mi
     <button class="speed-btn" data-s="8">4x</button>
   </div>
 </div>
-<div class="info">v3.3 · 10种动物 · 空格开始 R重置 F随机 数字调速</div>
+<div class="info">v3.4 · 10种动物 · 空格开始 R重置 F随机 数字调速</div>
 
 <script>
 // ==================== 画布 ====================
@@ -472,7 +472,8 @@ class Animal{
     if(this.stunNext&&!tUnstop&&target.stunImmune<=0){target.stunned=true;target.stunTimer=this.skills.find(s=>s.type==='stun')?.duration||1500;target.stunImmune=STUN_IMMUN;spawnFX('text',target.x,target.y-24,'眩晕!','#ffd700',1.3);triggerShake(5,200);for(let i=0;i<6;i++)spawnSpark(target.x,target.y,3,3+Math.random()*6,SPARK_COLORS.gold,800,{vx:(Math.random()-0.5)*20,vy:(Math.random()-0.5)*15-10});showComment(`💫 ${this.displayName} 眩晕了 ${target.displayName}！`,'#ffd700');}
     else if(this.stunNext&&tUnstop){spawnFX('text',target.x,target.y-24,'免疫!','#b0a090');this.stunNext=false;}
     else if(this.stunNext&&target.stunImmune>0){spawnFX('text',target.x,target.y-24,'抵抗!','#aaa');this.stunNext=false;}
-    this.stunNext=false;this.bleedNext=false;
+    this.stunNext=false;
+    if(this.bleedNext){const bsk=this.skills.find(s=>s.type==='bleed');if(bsk){target.dotEffects.push({dmg:bsk.damage||6,dur:bsk.duration||3500,tick:bsk.tickInterval||700,elapsed:0,tickAcc:0,isBleed:true});}spawnFX('text',target.x,target.y-24,'流血!','#e74c3c',1.2);for(let i=0;i<8;i++)spawnSpark(target.x+(Math.random()-0.5)*20,target.y+(Math.random()-0.5)*15,3,3+Math.random()*7,SPARK_COLORS.bleed,900,{vx:(Math.random()-0.5)*30,vy:(Math.random()-0.5)*20-10});this.bleedNext=false;}
     if(this.poisonNext){const sk=this.skills.find(s=>s.type==='poison');target.dotEffects.push({dmg:sk.damage||5,dur:sk.duration||4500,tick:sk.tickInterval||900,elapsed:0,tickAcc:0,isPoison:true});spawnFX('text',target.x,target.y-24,'中毒!','#8e44ad',1.2);if(sk.poisonCloud){for(let i=0;i<18;i++)spawnSpark(target.x+(Math.random()-0.5)*40,target.y+(Math.random()-0.5)*40,3,3+Math.random()*10,SPARK_COLORS.poison,1500,{vx:(Math.random()-0.5)*35,vy:(Math.random()-0.5)*35-25});}this.poisonNext=false;}
     target.hp-=dmg;target.flashTimer=100;target.onHit();target.atkTimer=Math.min(target.atkTimer,150);
     const dx=target.x-this.x,dy=target.y-this.y,dist=Math.sqrt(dx*dx+dy*dy)||1;
@@ -502,6 +503,62 @@ class Animal{
     if(target.hp<=0){target.hp=0;target.dead=true;this.onKill();showComment(`💀 ${this.emoji}${this.displayName} 击杀了 ${target.emoji}${target.displayName}！`,'#ff4444');showToast(`💀 ${this.displayName} 击杀 ${target.displayName}`);}
   }
 
+  _closest(enemies){if(!enemies||enemies.length===0)return null;return enemies.reduce((a,b)=>Math.hypot(a.x-this.x,a.y-this.y)<Math.hypot(b.x-this.x,b.y-this.y)?a:b);}
+  useSkill(skill,enemies){
+    if(this.isMinion&&!this._canLay)return;
+    const t=this._closest(enemies);
+    if(skill.smartRange&&(!t||Math.hypot(t.x-this.x,t.y-this.y)>skill.smartRange))return;
+    skill.cdTimer=skill.cd;
+    switch(skill.type){
+      case'stun':this.stunNext=true;spawnFX('text',this.x,this.y-20,skill.name+'!','#ff6b6b',1.3);showComment(`🐻 ${this.displayName} 举起巨掌——眩晕拍击！`,'#ffd700');break;
+      case'bleed':this.bleedNext=true;spawnFX('text',this.x,this.y-20,skill.name+'!','#e74c3c',1.3);showComment(`🩸 ${this.displayName} 释放流血撕咬`,'#e74c3c');break;
+      case'poison':this.poisonNext=true;spawnFX('text',this.x,this.y-20,skill.name+'!','#8e44ad',1.3);showComment(`🧪 ${this.displayName} 喷出毒液！`,'#8e44ad');break;
+      case'crit':this.critNext=true;spawnFX('text',this.x,this.y-20,skill.name+'!','#ffd700',1.3);break;
+      case'diveV2':
+        if(t&&!t.dead){
+          const ld=Math.hypot(t.x-this.x,t.y-this.y);
+          if(ld>skill.lockRange){skill.cdTimer=skill.cd;break;}
+          this.divePhase=1;this.divePhaseTimer=skill.climbTime;this.diveTarget=t;this.diveSkill=skill;
+          this.diveLockX=t.x;this.diveLockY=t.y;
+          spawnFX('text',this.x,this.y-24,'升空!','#87CEEB',1.3);showComment(`🦅 ${this.displayName} 升空盘旋，锁定目标！`,'#87CEEB');
+        }
+        break;
+      case'charge':
+        if(t&&!t.dead){
+          this.chargeTimer=skill.duration;this.chargeActive=true;
+          const dx=t.x-this.x,dy=t.y-this.y,dist=Math.hypot(dx,dy)||1;
+          this.vx=(dx/dist)*this.speed*60*skill.speedMult;this.vy=(dy/dist)*this.speed*60*skill.speedMult;
+          spawnFX('text',this.x,this.y-20,skill.name+'!','#cd853f',1.3);
+          for(let i=0;i<10;i++)spawnDust(this.x,this.y+this.size*0.3,4+Math.random()*10,'#c4a882',900,{vx:(Math.random()-0.5)*25,vy:5+Math.random()*12});
+          showComment(`🐂 ${this.displayName} 发起冲撞！`,'#cd853f');
+        }
+        break;
+      case'roar':
+        if(t){t.weakenPct=skill.weakenPct;t.weakenTimer=skill.duration;spawnFX('text',t.x,t.y-20,'攻击↓','#8e44ad',1.2);}
+        spawnFX('text',this.x,this.y-20,'咆哮!','#e8a87c',1.3);triggerShake(4,200);break;
+      case'quake':
+        if(skill.shakeIntensity)triggerShake(skill.shakeIntensity,skill.shakeTime);
+        const qr=skill.quakeRange||180;
+        for(let i=0;i<5;i++){const a=Math.random()*Math.PI*2,d=qr*(0.2+Math.random()*0.8);groundCracks.push({x:this.x+Math.cos(a)*d,y:this.y+Math.sin(a)*d,life:skill.shakeTime,age:0,len:15+Math.random()*25,angle:Math.random()*Math.PI*2});}
+        for(let i=0;i<20;i++){const a=Math.random()*Math.PI*2,d=qr*(0.1+Math.random()*0.9);spawnDust(this.x+Math.cos(a)*d,this.y+Math.sin(a)*d,5+Math.random()*12,'#8a7a58',skill.shakeTime,{vx:(Math.random()-0.5)*15,vy:-10-Math.random()*20});}
+        enemies.forEach(e=>{if(Math.hypot(e.x-this.x,e.y-this.y)>qr)return;const dd=skill.damage||0;e.hp-=dd;if(e.hp<=0){e.hp=0;e.dead=true;}e.flashTimer=120;
+          const eu=e.passives.some(p=>p.type==='unstoppable');if(!eu&&e.stunImmune<=0){e.stunned=true;e.stunTimer=skill.stunDuration;e.stunImmune=STUN_IMMUN;}
+          spawnFX('damage',e.x,e.y-16,dd,'#cd853f',1.1);for(let i=0;i<4;i++)spawnSpark(e.x+(Math.random()-0.5)*20,e.y+(Math.random()-0.5)*15,2,3+Math.random()*6,SPARK_COLORS.quake,800,{vx:(Math.random()-0.5)*20,vy:(Math.random()-0.5)*15-8});});
+        spawnFX('text',this.x,this.y-20,skill.name+'!','#cd853f',1.3);showComment(`🌍 ${this.displayName} 发动地动山摇！`,'#cd853f');break;
+      case'shield':this.shieldActive=true;this.shieldTimer=skill.duration;this.shieldReduce=skill.reducePct;spawnFX('text',this.x,this.y-20,'缩壳!','#6b8e6b',1.3);
+        for(let i=0;i<8;i++)spawnSpark(this.x+(Math.random()-0.5)*this.size,this.y+(Math.random()-0.5)*this.size,2,3+Math.random()*5,SPARK_COLORS.green,800,{vx:(Math.random()-0.5)*15,vy:(Math.random()-0.5)*15-5});
+        showComment(`🐢 ${this.displayName} 缩入壳中！`,'#6b8e6b');break;
+      case'lay_egg':eggs.push(new Egg(this.x,this.y,this));spawnFX('text',this.x,this.y-20,'下蛋!','#f4a460',1.3);showComment(`🥚 ${this.displayName} 下了一个蛋！`,'#f4a460');break;
+    }
+  }
+  rangedAttack(target){
+    if(!target||target.dead)return;this.rangedTimer=this.rangedCD;
+    const missChance=this.rangedMiss||0;const miss=Math.random()<missChance;
+    let pdata;if(miss){const a=Math.random()*Math.PI*2,sp=this.rangedSpeed*55;pdata={emoji:this.rangedEmoji,damage:0,target:null,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1000,_team:this.team};}
+    else{pdata={emoji:this.rangedEmoji,damage:this.rangedDmg,speed:this.rangedSpeed,target:target,_team:this.team};}
+    spawnFX('projectile',this.x,this.y-6,pdata,miss?'#999':'#f4a460');
+    if(miss)spawnFX('text',this.x,this.y-16,'偏了','#999');
+  }
   // ==================== v3.2 身体绘制：全身前冲攻击+3D建模+阶段变化 ====================
   drawBody(ctx,renderY,bScale){
     const s=this.size,bs=s*bScale;
