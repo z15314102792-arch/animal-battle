@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>动物大战 v3.5</title>
+<title>动物大战 v3.6</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#3a2f28;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:'PingFang SC','Microsoft YaHei',sans-serif;user-select:none;-webkit-user-select:none;padding:3px;touch-action:manipulation}
@@ -35,7 +35,7 @@ body{background:#3a2f28;display:flex;flex-direction:column;align-items:center;mi
 </style>
 </head>
 <body>
-<div class="title">⚔️ 动物大战 v3.5</div>
+<div class="title">⚔️ 动物大战 v3.6</div>
 <canvas id="game"></canvas>
 <div id="toast" class="toast hidden"></div>
 <div class="comment-bar" id="commentBar"><span class="comment-item">选择动物，点击开始对战</span></div>
@@ -61,7 +61,7 @@ body{background:#3a2f28;display:flex;flex-direction:column;align-items:center;mi
     <button class="speed-btn" data-s="8">4x</button>
   </div>
 </div>
-<div class="info">v3.5 · 10种动物 · 空格开始 R重置 F随机 数字调速</div>
+<div class="info">v3.6 · 10种动物 · 空格开始 R重置 F随机 数字调速</div>
 
 <script>
 // ==================== 画布 ====================
@@ -348,7 +348,7 @@ function pickItemType(){const total=ITEM_TYPES.reduce((s,t)=>s+t.weight,0);let r
 class Item{
   constructor(x,y){this.type=pickItemType();this.x=x;this.y=y;this.life=15000;this.age=0;this.dead=false;this.bob=0;}
   update(dt){this.age+=dt;this.bob=Math.sin(this.age/300)*3;if(this.age>=this.life)this.dead=true;}
-  draw(ctx){const a=this.age>13000?1-(this.age-13000)/2000:1;ctx.globalAlpha=a;const rt=Date.now()/800;const glow=ctx.createRadialGradient(this.x,this.y+this.bob,3,this.x,this.y+this.bob,18);glow.addColorStop(0,this.type.color);glow.addColorStop(0.5,this.type.color+'88');glow.addColorStop(1,'transparent');ctx.fillStyle=glow;ctx.beginPath();ctx.arc(this.x,this.y+this.bob,18,0,Math.PI*2);ctx.fill();ctx.strokeStyle=this.type.color;ctx.lineWidth=1.5;ctx.globalAlpha=a*0.7;ctx.setLineDash([4,3]);ctx.lineDashOffset=rt*30;ctx.beginPath();ctx.arc(this.x,this.y+this.bob,14,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=a;ctx.font='20px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(this.type.icon,this.x,this.y+this.bob);ctx.globalAlpha=a*0.8;ctx.font='bold 8px "PingFang SC"';ctx.fillStyle='#fff';ctx.fillText(this.type.name,this.x,this.y+this.bob+16);ctx.globalAlpha=1;}
+  draw(ctx){const a=this.age>13000?1-(this.age-13000)/2000:1;if(isNaN(this.x)||isNaN(this.y))return;ctx.globalAlpha=a;const rt=Date.now()/800;const glow=ctx.createRadialGradient(this.x,this.y+this.bob,3,this.x,this.y+this.bob,18);glow.addColorStop(0,this.type.color);glow.addColorStop(0.5,this.type.color+'88');glow.addColorStop(1,'transparent');ctx.fillStyle=glow;ctx.beginPath();ctx.arc(this.x,this.y+this.bob,18,0,Math.PI*2);ctx.fill();ctx.strokeStyle=this.type.color;ctx.lineWidth=1.5;ctx.globalAlpha=a*0.7;ctx.setLineDash([4,3]);ctx.lineDashOffset=rt*30;ctx.beginPath();ctx.arc(this.x,this.y+this.bob,14,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=a;ctx.font='20px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(this.type.icon,this.x,this.y+this.bob);ctx.globalAlpha=a*0.8;ctx.font='bold 8px "PingFang SC"';ctx.fillStyle='#fff';ctx.fillText(this.type.name,this.x,this.y+this.bob+16);ctx.globalAlpha=1;}
 }
 
 // ==================== 动物数据 ====================
@@ -840,7 +840,8 @@ class Animal{
     const gh=bs*0.28*breath,gw=bs*0.34;const ggr=ctx.createLinearGradient(bx,by-gh,bx,by+gh);ggr.addColorStop(0,this.color);ggr.addColorStop(1,this.bodyColor||this.color);ctx.fillStyle=ggr;ctx.beginPath();ctx.moveTo(bx,by-gh*0.9);ctx.quadraticCurveTo(bx+gw*0.85,by-gh*0.1,bx+gw*0.65,by+gh*0.68);ctx.quadraticCurveTo(bx+gw*0.15,by+gh*0.82,bx-gw*0.15,by+gh*0.82);ctx.quadraticCurveTo(bx-gw*0.65,by+gh*0.68,bx-gw*0.85,by-gh*0.1);ctx.quadraticCurveTo(bx,by-gh*0.85,bx,by-gh*0.9);ctx.fill();ctx.strokeStyle='rgba(0,0,0,0.18)';ctx.lineWidth=1.8;ctx.stroke();
   }
 
-  draw(ctx){if(this.dead)return;const bScale=1+this.scaleBob;const renderY=this.y-this.drawY;
+  draw(ctx){if(this.dead)return;if(isNaN(this.x)||isNaN(this.y)){this.x=arenaL+(arenaR-arenaL)*0.5;this.y=arenaT+(arenaB-arenaT)*0.5;this._newDir();}
+    const bScale=1+this.scaleBob;const renderY=this.y-this.drawY;
     if(this.speedBoostTimer>0&&!this.stunned){const spd=Math.hypot(this.vx,this.vy)||1;const nx=-(this.vx/spd),ny=-(this.vy/spd);ctx.strokeStyle='rgba(255,220,60,0.5)';ctx.lineWidth=2;ctx.lineCap='round';for(let i=0;i<3;i++){const lx=this.x+nx*(this.size*0.6+i*10)+ny*(i-1)*4,ly=renderY+ny*(this.size*0.6+i*10)-nx*(i-1)*4;ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(lx+nx*8,ly+ny*8);ctx.stroke();}}
     if(this.dmgBoostTimer>0&&!this.stunned){const pa=Date.now()/200;ctx.strokeStyle='rgba(255,100,20,0.4)';ctx.lineWidth=3;ctx.setLineDash([3,5]);ctx.lineDashOffset=pa*10;ctx.beginPath();ctx.arc(this.x,renderY,this.size+5,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
     if(this._frozen&&this.stunned){ctx.fillStyle='rgba(100,200,255,0.3)';ctx.beginPath();ctx.arc(this.x,renderY,this.size+3,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(200,240,255,0.6)';ctx.lineWidth=2.5;for(let i=0;i<3;i++){const a=Date.now()/300+i*Math.PI*2/3;ctx.beginPath();ctx.moveTo(this.x,renderY);ctx.lineTo(this.x+Math.cos(a)*(this.size+8),renderY+Math.sin(a)*(this.size+8));ctx.stroke();}}
@@ -876,7 +877,7 @@ class Egg{
   update(dt){if(this.dead)return;this.accTime+=dt;this.bobOff=Math.sin(this.accTime/400)*1.5;if(this.hitCD>0)this.hitCD-=dt;if(this.flashTimer>0)this.flashTimer-=dt;if(this.accTime>=this.incubateTime){this.dead=true;const cfg={...CHICK_CFG};const chick=new Animal(cfg,this.x,this.owner.team,this.owner);chick.x=this.x;chick.y=this.y;chick._chickPhase=0;chick._chickTimer=0;chick.displayName='小鸡';chick.emoji='🐤';chick.isMinion=true;chick.ranged=false;animals.push(chick);spawnFX('text',this.x,this.y-16,'孵化!🐤','#ffd700',1.2);showComment('🐤 小鸡破壳而出！','#ffd700');}}
   takeDmg(dmg){if(this.hitCD>0)return;this.hp-=dmg;this.flashTimer=100;this.hitCD=350;spawnFX('damage',this.x,this.y-8,dmg,'#ff9966');if(this.hp<=0){this.hp=0;this.dead=true;spawnFX('text',this.x,this.y-10,'蛋碎了!','#ff6b6b',1.1);}}
   draw(ctx){
-    if(this.dead)return;const s=this.size;
+    if(this.dead)return;if(isNaN(this.x)||isNaN(this.y))return;const s=this.size;
     // 地面阴影
     ctx.fillStyle='rgba(0,0,0,0.2)';ctx.beginPath();ctx.ellipse(this.x,this.y+s*0.12,s*0.32,s*0.07,0,0,Math.PI*2);ctx.fill();
     // 实心蛋体（不透明渐变）
@@ -910,7 +911,9 @@ function drawFX(ctx){groundCracks.forEach(c=>{const a=1-c.age/c.life;ctx.strokeS
 
 // ==================== 主循环 ====================
 function loop(ts){
-  if(!lastTime)lastTime=ts;let dt=Math.min(ts-lastTime,100)*gameSpeed;lastTime=ts;
+  try{
+  if(lastTime===0)lastTime=ts;let dt=Math.min(ts-lastTime,100)*gameSpeed;lastTime=ts;
+  if(isNaN(dt)||dt<0)dt=16;
   ctx.clearRect(0,0,W,H);
   if(shakeTimer>0){shakeTimer-=dt;const r=shakeIntensity*(shakeTimer/shakeMax);shakeX=(Math.random()-0.5)*r*2;shakeY=(Math.random()-0.5)*r*2;if(shakeTimer<=0){shakeX=0;shakeY=0;shakeIntensity=0;}}
   ctx.save();if(shakeX||shakeY)ctx.translate(shakeX,shakeY);
@@ -933,7 +936,9 @@ function loop(ts){
   eggs.forEach(e=>e.draw(ctx));animals.forEach(a=>a.draw(ctx));items.forEach(it=>it.draw(ctx));drawFX(ctx);
   if(gameState==='ended'){const alpha=0.5+Math.sin(Date.now()/500)*0.3;ctx.globalAlpha=alpha;ctx.font='bold 26px "PingFang SC"';ctx.fillStyle='#ffd700';ctx.textAlign='center';if(winner)ctx.fillText(`${winner.emoji}${winner.displayName}获胜!`,W/2,H/2-8);else ctx.fillText('平局!',W/2,H/2-8);ctx.globalAlpha=1;}
   if(gameState==='idle'){ctx.globalAlpha=0.28;ctx.font='bold 14px "PingFang SC"';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText('选择动物，点击开始对战',W/2,H/2);ctx.globalAlpha=1;}
-  ctx.restore();frameId=requestAnimationFrame(loop);
+  ctx.restore();
+  }catch(e){console.error('loop error:',e);showComment('⚠️ 游戏出错，自动修复中...','#ff6b6b');lastTime=0;}
+  frameId=requestAnimationFrame(loop);
 }
 
 // ==================== UI ====================
