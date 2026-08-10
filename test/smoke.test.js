@@ -68,29 +68,29 @@ function check(name, condition, detail = '') {
     check('开始按钮存在', await page.$('#bf') !== null);
     check('重置按钮存在', await page.$('#bx') !== null);
     check('随机按钮存在', await page.$('#br') !== null);
-    check('动物选择器存在', await page.$('#asel') !== null);
+    check('动物卡片网格存在', await page.$('#animalGrid') !== null);
+    check('说明按钮存在', await page.$('#bg') !== null);
     check('地图选择器存在', await page.$('#msel') !== null);
     check('速度按钮存在', await page.$$eval('.speed-btn', els => els.length) >= 4);
     check('评论区存在', await page.$('#commentBar') !== null);
     check('Toast 存在', await page.$('#toast') !== null);
+    check('引导页覆盖层存在', await page.$('#guideOverlay') !== null);
 
     check('加载后无 JS 报错', errors.length === 0,
       errors.length > 0 ? `发现 ${errors.length} 个错误: ${errors.slice(0, 3).join('; ')}` : '');
 
     // ══════════════════════════════════════
-    // 阶段 2：添加动物
+    // 阶段 2：添加动物（新卡片UI）
     // ══════════════════════════════════════
     console.log('');
-    console.log('🎯 阶段 2：添加动物');
+    console.log('🎯 阶段 2：添加动物（卡片点击）');
 
-    // 选一只鸡
-    await page.select('#asel', 'chicken');
-    await page.click('#badd');
+    // 点击鸡卡片
+    await page.click('.animal-card[data-key="chicken"]');
     await sleep(200);
 
-    // 选一只熊
-    await page.select('#asel', 'bear');
-    await page.click('#badd');
+    // 点击熊卡片
+    await page.click('.animal-card[data-key="bear"]');
     await sleep(200);
 
     // 检查标签显示
