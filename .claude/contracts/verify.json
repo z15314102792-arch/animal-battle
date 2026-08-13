@@ -1,0 +1,7 @@
+{
+  "name": "动物大战-验收",
+  "required_file": "verify-results.json",
+  "required_keys": ["project", "version", "checks", "summary"],
+  "min_size_bytes": 200,
+  "active": true
+}
