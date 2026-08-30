@@ -1,37 +1,181 @@
-/* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V4 */
-/* Hallmark · macrostructure: App Console · tone: tactical wildlife board · anchor hue: river-blue */
-:root {
+/* 动物大战 2.0 视觉设计规范与主题系统 (Theme & Design Tokens) */
+
+:root,
+[data-theme="night"] {
   color-scheme: dark;
-  --color-bg: oklch(16% 0.018 245);
-  --color-surface: oklch(21% 0.026 245);
-  --color-surface-2: oklch(26% 0.032 245);
-  --color-surface-3: oklch(31% 0.038 245);
-  --color-line: oklch(39% 0.04 245);
-  --color-text: oklch(94% 0.018 245);
-  --color-muted: oklch(73% 0.035 245);
-  --color-blue: oklch(67% 0.16 245);
-  --color-red: oklch(66% 0.16 30);
-  --color-green: oklch(70% 0.14 150);
-  --color-gold: oklch(78% 0.13 82);
-  --font-display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --color-bg: #0c1017;
+  --color-bg-subtle: #141b24;
+  --color-surface: #192230;
+  --color-surface-hover: #222e40;
+  --color-surface-2: #212c3d;
+  --color-surface-3: #2c3a50;
+  --color-line: #33445c;
+  --color-line-subtle: #243245;
+  --color-text: #f0f4fc;
+  --color-text-title: #ffffff;
+  --color-muted: #94a6c2;
+  
+  --color-primary: #3b82f6;
+  --color-primary-glow: rgba(59, 130, 246, 0.35);
+  --color-blue: #38bdf8;
+  --color-blue-bg: rgba(56, 189, 248, 0.15);
+  --color-red: #f43f5e;
+  --color-red-bg: rgba(244, 63, 94, 0.15);
+  --color-green: #22c55e;
+  --color-green-bg: rgba(34, 197, 94, 0.15);
+  --color-gold: #fbbf24;
+  --color-gold-glow: rgba(251, 191, 36, 0.4);
+  --color-purple: #a855f7;
+
+  /* 地图配色 - 深空夜战 */
+  --map-ground-1: #1a2920;
+  --map-ground-2: #24362a;
+  --map-water: #1b4965;
+  --map-water-foam: rgba(142, 202, 230, 0.35);
+  --map-cliff: #433527;
+  --map-wall: #303b47;
+  --map-grid: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #f3f6f9;
+  --color-bg-subtle: #e5ebf2;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f8fafc;
+  --color-surface-2: #ebf1f7;
+  --color-surface-3: #dde6f0;
+  --color-line: #cbd5e1;
+  --color-line-subtle: #e2e8f0;
+  --color-text: #1e293b;
+  --color-text-title: #0f172a;
+  --color-muted: #64748b;
+  
+  --color-primary: #2563eb;
+  --color-primary-glow: rgba(37, 99, 235, 0.25);
+  --color-blue: #0284c7;
+  --color-blue-bg: rgba(2, 132, 199, 0.12);
+  --color-red: #e11d48;
+  --color-red-bg: rgba(225, 29, 72, 0.12);
+  --color-green: #16a34a;
+  --color-green-bg: rgba(22, 163, 74, 0.12);
+  --color-gold: #d97706;
+  --color-gold-glow: rgba(217, 119, 6, 0.3);
+  --color-purple: #9333ea;
+
+  /* 地图配色 - 晨曦原野 */
+  --map-ground-1: #78a163;
+  --map-ground-2: #8db577;
+  --map-water: #38a3a5;
+  --map-water-foam: rgba(255, 255, 255, 0.65);
+  --map-cliff: #b08968;
+  --map-wall: #6c757d;
+  --map-grid: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="nature"] {
+  color-scheme: dark;
+  --color-bg: #0f1a14;
+  --color-bg-subtle: #17261d;
+  --color-surface: #1e3327;
+  --color-surface-hover: #274233;
+  --color-surface-2: #243c2e;
+  --color-surface-3: #2f4e3c;
+  --color-line: #3d634d;
+  --color-line-subtle: #2d4a39;
+  --color-text: #e8f5ee;
+  --color-text-title: #ffffff;
+  --color-muted: #8eb39d;
+  
+  --color-primary: #10b981;
+  --color-primary-glow: rgba(16, 185, 129, 0.35);
+  --color-blue: #38bdf8;
+  --color-blue-bg: rgba(56, 189, 248, 0.15);
+  --color-red: #fb7185;
+  --color-red-bg: rgba(251, 113, 133, 0.15);
+  --color-green: #34d399;
+  --color-green-bg: rgba(52, 211, 153, 0.15);
+  --color-gold: #f59e0b;
+  --color-gold-glow: rgba(245, 158, 11, 0.4);
+  --color-purple: #c084fc;
+
+  /* 地图配色 - 河谷生机 */
+  --map-ground-1: #1e3a29;
+  --map-ground-2: #284c36;
+  --map-water: #15616d;
+  --map-water-foam: rgba(162, 224, 212, 0.45);
+  --map-cliff: #573f27;
+  --map-wall: #394f41;
+  --map-grid: rgba(255, 255, 255, 0.09);
+}
+
+[data-theme="origami"] {
+  color-scheme: light;
+  --color-bg: #efe6d5;
+  --color-bg-subtle: #e2d6c1;
+  --color-surface: #f7f1e6;
+  --color-surface-hover: #ffffff;
+  --color-surface-2: #e8dcce;
+  --color-surface-3: #ddcdbe;
+  --color-line: #bcab98;
+  --color-line-subtle: #d3c4b3;
+  --color-text: #3c3228;
+  --color-text-title: #221b14;
+  --color-muted: #7d6e5d;
+  
+  --color-primary: #c2593f;
+  --color-primary-glow: rgba(194, 89, 63, 0.3);
+  --color-blue: #407b99;
+  --color-blue-bg: rgba(64, 123, 153, 0.15);
+  --color-red: #c84b4b;
+  --color-red-bg: rgba(200, 75, 75, 0.15);
+  --color-green: #588157;
+  --color-green-bg: rgba(88, 129, 87, 0.15);
+  --color-gold: #b5832a;
+  --color-gold-glow: rgba(181, 131, 42, 0.35);
+  --color-purple: #7b587d;
+
+  /* 地图配色 - 纸雕生态 */
+  --map-ground-1: #d8cbb5;
+  --map-ground-2: #e2d7c5;
+  --map-water: #7ba3b8;
+  --map-water-foam: rgba(255, 255, 255, 0.7);
+  --map-cliff: #aa937d;
+  --map-wall: #7e7368;
+  --map-grid: rgba(60, 50, 40, 0.12);
+}
+
+:root {
+  --font-display: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 20px;
   --space-6: 24px;
+  
   --text-xs: 12px;
-  --text-sm: 14px;
-  --text-md: 16px;
-  --text-lg: 20px;
-  --text-xl: 28px;
+  --text-sm: 13px;
+  --text-md: 15px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+  
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.25);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,0.35);
+  
   --ease-out: cubic-bezier(.16, 1, .3, 1);
-  --ease-in: cubic-bezier(.7, 0, .84, 0);
   --ease-in-out: cubic-bezier(.65, 0, .35, 1);
-  --dur-fast: 120ms;
-  --dur-med: 180ms;
+  --dur-fast: 140ms;
+  --dur-med: 240ms;
   --rule-thin: 1px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
 }
