@@ -1,0 +1,965 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>动物大战 2.0 v0.1</title>
+  <style>
+    /* Hallmark · macrostructure: Tool Surface · tone: tactical game console · anchor hue: river-blue */
+    :root {
+      color-scheme: dark;
+      --bg: #101319;
+      --panel: #1a2029;
+      --panel-2: #232b35;
+      --line: #344150;
+      --text: #edf2f7;
+      --muted: #aab6c3;
+      --red: #e35d5b;
+      --blue: #4fa3ff;
+      --green: #59c88a;
+      --gold: #e7b64b;
+      --water: #326f92;
+      --mud: #7a6249;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { overflow-x: clip; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .app {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 330px minmax(360px, 1fr) 320px;
+      gap: 12px;
+    }
+
+    .topbar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      background: #161b22;
+    }
+
+    .brand { display: flex; flex-direction: column; gap: 2px; }
+    .brand strong { font-size: 20px; }
+    .brand span { color: var(--muted); font-size: 12px; }
+
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+    button, select {
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--text);
+      min-height: 34px;
+      padding: 7px 10px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:hover { border-color: #5b6d82; }
+    button:focus-visible, select:focus-visible { outline: 3px solid #e7b64b; outline-offset: 2px; }
+    button:active { transform: translateY(1px); }
+    button.primary { background: #245b8f; border-color: #3678b8; }
+    button.danger { background: #713331; border-color: #96514e; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      min-height: 0;
+    }
+
+    .panel h2 {
+      margin: 0;
+      padding: 10px 12px;
+      font-size: 15px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section { padding: 10px 12px; border-bottom: 1px solid #2a3440; }
+    .section:last-child { border-bottom: 0; }
+    .label { color: var(--muted); font-size: 12px; margin-bottom: 7px; }
+
+    .animal-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .animal-card {
+      border: 1px solid var(--line);
+      background: #202833;
+      padding: 8px;
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 8px;
+      align-items: center;
+      min-height: 72px;
+    }
+
+    .animal-card.selected { outline: 2px solid var(--gold); }
+    .icon { font-size: 26px; line-height: 1; }
+    .name { font-weight: 700; font-size: 14px; }
+    .role { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+    .team-list { display: grid; gap: 7px; }
+
+    .slot {
+      display: grid;
+      grid-template-columns: 1fr 92px;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--line);
+      background: #151b23;
+      padding: 8px;
+    }
+
+    .slot-title { font-size: 13px; font-weight: 700; }
+    .slot-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .slot select { width: 92px; min-height: 30px; padding: 4px 6px; font-size: 12px; }
+
+    .battle-wrap {
+      display: grid;
+      grid-template-rows: auto auto auto;
+      align-self: start;
+    }
+
+    .battle-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      gap: 8px;
+    }
+
+    .battle-head strong { font-size: 15px; }
+    .battle-head span { color: var(--muted); font-size: 12px; }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 10;
+      display: block;
+      background: #202a28;
+    }
+
+    .orders {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 10px 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .orders button { min-width: 0; }
+    .log {
+      height: 270px;
+      overflow: auto;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    .log-entry {
+      border-left: 3px solid #4c5a6b;
+      background: #151b23;
+      padding: 7px 8px;
+      color: #dbe3ec;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .stat {
+      background: #151b23;
+      border: 1px solid #2b3541;
+      padding: 8px;
+    }
+
+    .stat b { display: block; font-size: 18px; }
+    .stat span { color: var(--muted); font-size: 12px; }
+
+    .legend {
+      display: grid;
+      gap: 7px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .swatch {
+      display: inline-block;
+      width: 14px;
+      height: 9px;
+      margin-right: 6px;
+      border: 1px solid rgba(255,255,255,.25);
+    }
+
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      canvas { aspect-ratio: 4 / 3; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <strong>动物大战 2.0 v0.1</strong>
+        <span>3v3 生态策略乱斗 · 河谷原型 · Battle Director</span>
+      </div>
+      <div class="toolbar">
+        <button id="randomTeams">随机队伍</button>
+        <button id="resetDeploy">重置部署</button>
+        <button id="startBattle" class="primary">开始战斗</button>
+      </div>
+    </header>
+
+    <aside class="panel">
+      <h2>队伍与本能</h2>
+      <section class="section">
+        <div class="label">可选动物</div>
+        <div id="animalGrid" class="animal-grid"></div>
+      </section>
+      <section class="section">
+        <div class="label">蓝队</div>
+        <div id="blueTeam" class="team-list"></div>
+      </section>
+      <section class="section">
+        <div class="label">红队</div>
+        <div id="redTeam" class="team-list"></div>
+      </section>
+    </aside>
+
+    <section class="panel battle-wrap">
+      <div class="battle-head">
+        <strong>河谷战场</strong>
+        <span id="battleState">部署阶段</span>
+      </div>
+      <canvas id="battlefield" width="960" height="600"></canvas>
+      <div class="orders">
+        <button id="orderFocus">集猎目标</button>
+        <button id="orderRetreat">撤退受伤者</button>
+        <button id="orderGuard">守住河口</button>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <h2>战况</h2>
+      <section class="section">
+        <div class="status-grid">
+          <div class="stat"><b id="blueAlive">3</b><span>蓝队存活</span></div>
+          <div class="stat"><b id="redAlive">3</b><span>红队存活</span></div>
+          <div class="stat"><b id="ordersLeft">2</b><span>剩余指令</span></div>
+          <div class="stat"><b id="timer">0.0s</b><span>战斗时间</span></div>
+        </div>
+      </section>
+      <section class="section">
+        <div class="label">空间层</div>
+        <div class="legend">
+          <div><span class="swatch" style="background:#33402f"></span>Ground：多数动物活动区</div>
+          <div><span class="swatch" style="background:#326f92"></span>Water：鳄鱼/乌龟优势区</div>
+          <div><span class="swatch" style="background:#7a6249"></span>HighGround：高地预留</div>
+          <div><span class="swatch" style="background:#485363"></span>Wall：蜘蛛可攀附</div>
+          <div><span class="swatch" style="background:#57708c"></span>Air：鹰盘旋层</div>
+        </div>
+      </section>
+      <section class="section">
+        <div class="label">事件日志</div>
+        <div id="eventLog" class="log"></div>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    const VERSION = '2.0-v0.1';
+    const TAGS = {
+      Ground: 'Ground',
+      Water: 'Water',
+      HighGround: 'HighGround',
+      Wall: 'Wall',
+      Air: 'Air',
+      Tank: 'Tank',
+      Control: 'Control',
+      Predator: 'Predator',
+      Support: 'Support'
+    };
+
+    const INSTINCTS = {
+      hunt: { name: '猎杀', desc: '优先残血和落单目标' },
+      territory: { name: '领地', desc: '守住部署区和关键地形' },
+      herd: { name: '护群', desc: '保持队友距离' },
+      prowl: { name: '游猎', desc: '寻找侧翼和理想距离' }
+    };
+
+    const ANIMALS = {
+      bull: {
+        id: 'bull', icon: '🐂', name: '公牛', role: '冲撞前排',
+        health: 245, power: 22, moveSpeed: 62, mass: 90, bodySize: 23, attackReach: 34,
+        layers: [TAGS.Ground], tags: [TAGS.Tank, TAGS.Control],
+        color: '#8b5b38', accent: '#e5d2a4'
+      },
+      eagle: {
+        id: 'eagle', icon: '🦅', name: '鹰', role: '空中刺客',
+        health: 135, power: 28, moveSpeed: 82, mass: 32, bodySize: 17, attackReach: 45,
+        layers: [TAGS.Air], tags: [TAGS.Predator],
+        color: '#8f8b78', accent: '#f1f1df'
+      },
+      turtle: {
+        id: 'turtle', icon: '🐢', name: '乌龟', role: '防线锚点',
+        health: 260, power: 13, moveSpeed: 34, mass: 78, bodySize: 21, attackReach: 28,
+        layers: [TAGS.Ground, TAGS.Water], tags: [TAGS.Tank],
+        color: '#4d8a58', accent: '#a8d07d'
+      },
+      chicken: {
+        id: 'chicken', icon: '🐔', name: '母鸡', role: '后排召唤',
+        health: 150, power: 12, moveSpeed: 54, mass: 22, bodySize: 16, attackReach: 92,
+        layers: [TAGS.Ground], tags: [TAGS.Support],
+        color: '#d9b35d', accent: '#e85d4f'
+      },
+      crocodile: {
+        id: 'crocodile', icon: '🐊', name: '鳄鱼', role: '水域伏击',
+        health: 230, power: 25, moveSpeed: 44, mass: 82, bodySize: 24, attackReach: 38,
+        layers: [TAGS.Water, TAGS.Ground], tags: [TAGS.Predator, TAGS.Control],
+        color: '#315f43', accent: '#9ac66f'
+      },
+      spider: {
+        id: 'spider', icon: '🕷️', name: '蜘蛛', role: '织网控制',
+        health: 125, power: 14, moveSpeed: 68, mass: 18, bodySize: 15, attackReach: 70,
+        layers: [TAGS.Wall, TAGS.Ground], tags: [TAGS.Control],
+        color: '#493f51', accent: '#c7b8d8'
+      }
+    };
+
+    const MAP = {
+      name: '河谷',
+      zones: [
+        { id: 'river', layer: TAGS.Water, x: 410, y: 0, w: 150, h: 600 },
+        { id: 'leftHigh', layer: TAGS.HighGround, x: 95, y: 95, w: 180, h: 115 },
+        { id: 'rightHigh', layer: TAGS.HighGround, x: 685, y: 390, w: 180, h: 115 },
+        { id: 'northWall', layer: TAGS.Wall, x: 0, y: 0, w: 960, h: 22 },
+        { id: 'southWall', layer: TAGS.Wall, x: 0, y: 578, w: 960, h: 22 }
+      ],
+      guardPoint: { x: 480, y: 300 }
+    };
+
+    const canvas = document.getElementById('battlefield');
+    const ctx = canvas.getContext('2d');
+    const state = {
+      phase: 'deploy',
+      blueTeam: [
+        { animal: 'bull', instinct: 'territory', x: 180, y: 210 },
+        { animal: 'chicken', instinct: 'herd', x: 130, y: 305 },
+        { animal: 'eagle', instinct: 'hunt', x: 205, y: 395 }
+      ],
+      redTeam: [
+        { animal: 'crocodile', instinct: 'hunt', x: 780, y: 210 },
+        { animal: 'turtle', instinct: 'territory', x: 830, y: 305 },
+        { animal: 'spider', instinct: 'prowl', x: 755, y: 395 }
+      ],
+      units: [],
+      effects: [],
+      log: [],
+      selectedSide: 'blue',
+      selectedSlot: 0,
+      selectedUnitId: null,
+      ordersLeft: 2,
+      activeOrder: null,
+      time: 0,
+      lastTs: 0,
+      winner: null
+    };
+
+    function emit(type, text, data = {}) {
+      state.log.unshift({ type, text, t: state.time, data });
+      state.log = state.log.slice(0, 20);
+      state.effects.push({ kind: 'text', text, x: data.x || 480, y: data.y || 80, life: 1.5, max: 1.5 });
+      renderLog();
+    }
+
+    function makeUnit(side, slot, cfg) {
+      const def = ANIMALS[cfg.animal];
+      return {
+        uid: `${side}-${slot}-${def.id}`,
+        side, slot,
+        def,
+        instinct: cfg.instinct,
+        x: cfg.x,
+        y: cfg.y,
+        vx: 0,
+        vy: 0,
+        hp: def.health,
+        maxHp: def.health,
+        cooldown: 0,
+        cc: null,
+        action: '部署',
+        orderBias: null,
+        dead: false,
+        desiredLayer: def.layers[0],
+        hitFlash: 0
+      };
+    }
+
+    function dist(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function zoneAt(x, y) {
+      for (const z of MAP.zones) {
+        if (x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h) return z.layer;
+      }
+      return TAGS.Ground;
+    }
+
+    function layerMoveMultiplier(unit) {
+      const layer = zoneAt(unit.x, unit.y);
+      if (unit.def.layers.includes(layer)) return 1;
+      if (layer === TAGS.Water) return 0.48;
+      if (layer === TAGS.HighGround) return 0.82;
+      if (layer === TAGS.Wall) return 0.65;
+      return 1;
+    }
+
+    function scoreTarget(unit, target) {
+      const d = Math.max(1, dist(unit, target));
+      const hpRatio = target.hp / target.maxHp;
+      let score = 1000 / d + (1 - hpRatio) * 2.2;
+      if (unit.instinct === 'hunt') score += (1 - hpRatio) * 3 + (d < 210 ? 0.8 : 0);
+      if (unit.instinct === 'territory') {
+        const homeX = unit.side === 'blue' ? 180 : 780;
+        score += Math.max(0, 1.3 - Math.abs(target.x - homeX) / 280);
+      }
+      if (unit.instinct === 'herd') {
+        const friendNear = state.units.some(u => u.side === unit.side && u.uid !== unit.uid && !u.dead && dist(u, unit) < 150);
+        if (friendNear) score += 0.9;
+      }
+      if (unit.instinct === 'prowl') score += Math.abs(target.y - unit.y) / 420;
+      if (state.activeOrder?.kind === 'focus' && state.activeOrder.targetId === target.uid) score += 5;
+      return score;
+    }
+
+    function chooseTarget(unit) {
+      const enemies = state.units.filter(u => u.side !== unit.side && !u.dead);
+      if (!enemies.length) return null;
+      return enemies.map(e => [scoreTarget(unit, e), e]).sort((a, b) => b[0] - a[0])[0][1];
+    }
+
+    function applyDamage(source, target, amount, tag) {
+      if (target.dead) return;
+      let final = amount;
+      if (target.def.id === 'turtle') final *= 0.72;
+      target.hp -= final;
+      target.hitFlash = 0.16;
+      state.effects.push({ kind: 'hit', x: target.x, y: target.y, life: .35, max: .35, color: source.def.accent });
+      if (target.hp <= 0) {
+        target.hp = 0;
+        target.dead = true;
+        emit('kill', `${source.def.name} 击败 ${target.def.name}`, { x: target.x, y: target.y });
+      } else if (tag) {
+        emit('hit', tag, { x: target.x, y: target.y });
+      }
+    }
+
+    function specialAction(unit, target) {
+      if (!target || unit.cooldown > 0) return false;
+      const d = dist(unit, target);
+      if (unit.def.id === 'bull' && d < 82) {
+        const nx = (target.x - unit.x) / d;
+        const ny = (target.y - unit.y) / d;
+        target.x += nx * 38;
+        target.y += ny * 24;
+        target.cc = { type: 'knockback', t: .35 };
+        applyDamage(unit, target, unit.def.power * 1.1, '公牛冲散阵型');
+        unit.cooldown = 2.8;
+        return true;
+      }
+      if (unit.def.id === 'eagle' && d < 135 && target.hp / target.maxHp < .62) {
+        applyDamage(unit, target, unit.def.power * 1.75, '鹰从空中俯冲');
+        unit.cooldown = 3.4;
+        return true;
+      }
+      if (unit.def.id === 'crocodile' && d < 70 && zoneAt(unit.x, unit.y) === TAGS.Water) {
+        target.cc = { type: 'grab', t: .8 };
+        applyDamage(unit, target, unit.def.power * 1.35, '鳄鱼在水边抓咬');
+        unit.cooldown = 3.2;
+        return true;
+      }
+      if (unit.def.id === 'spider' && d < 120) {
+        target.cc = { type: 'root', t: 1.2 };
+        applyDamage(unit, target, unit.def.power * .75, '蜘蛛织网定身');
+        unit.cooldown = 4.1;
+        return true;
+      }
+      if (unit.def.id === 'turtle' && unit.hp / unit.maxHp < .55) {
+        unit.hp = Math.min(unit.maxHp, unit.hp + 18);
+        emit('defend', '乌龟缩壳恢复', { x: unit.x, y: unit.y });
+        unit.cooldown = 5.5;
+        return true;
+      }
+      if (unit.def.id === 'chicken' && d < unit.def.attackReach) {
+        applyDamage(unit, target, unit.def.power, '母鸡远程撒米');
+        unit.cooldown = 1.6;
+        return true;
+      }
+      return false;
+    }
+
+    function updateUnit(unit, dt) {
+      if (unit.dead) return;
+      unit.cooldown = Math.max(0, unit.cooldown - dt);
+      unit.hitFlash = Math.max(0, unit.hitFlash - dt);
+      if (unit.cc) {
+        unit.cc.t -= dt;
+        if (unit.cc.t <= 0) unit.cc = null;
+      }
+
+      const target = chooseTarget(unit);
+      if (!target) return;
+      if (specialAction(unit, target)) return;
+
+      const d = Math.max(1, dist(unit, target));
+      const desired = { x: target.x, y: target.y };
+      const friends = state.units.filter(u => u.side === unit.side && u.uid !== unit.uid && !u.dead);
+
+      if (unit.instinct === 'territory') {
+        desired.x = unit.side === 'blue' ? 245 : 715;
+        desired.y = clamp(unit.y * .65 + MAP.guardPoint.y * .35, 90, 510);
+      }
+      if (unit.instinct === 'herd' && friends.length) {
+        const cx = friends.reduce((s, f) => s + f.x, 0) / friends.length;
+        const cy = friends.reduce((s, f) => s + f.y, 0) / friends.length;
+        desired.x = (desired.x + cx) / 2;
+        desired.y = (desired.y + cy) / 2;
+      }
+      if (unit.instinct === 'prowl') {
+        desired.x = target.x + (unit.side === 'blue' ? -80 : 80);
+        desired.y = target.y + (unit.y < target.y ? -80 : 80);
+      }
+      if (state.activeOrder?.kind === 'retreat' && state.activeOrder.targetId === unit.uid) {
+        desired.x = unit.side === 'blue' ? 90 : 870;
+        desired.y = 300;
+      }
+      if (state.activeOrder?.kind === 'guard') {
+        desired.x = (desired.x + MAP.guardPoint.x) / 2;
+        desired.y = (desired.y + MAP.guardPoint.y) / 2;
+      }
+
+      const dx = desired.x - unit.x;
+      const dy = desired.y - unit.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const reach = unit.def.attackReach + unit.def.bodySize + target.def.bodySize;
+      const wantsDistance = unit.def.id === 'chicken' || unit.def.id === 'eagle' || unit.def.id === 'spider';
+      const stopAt = wantsDistance ? reach * .82 : reach * .42;
+      const ccMul = unit.cc ? (unit.cc.type === 'root' || unit.cc.type === 'grab' ? 0 : .45) : 1;
+      const speed = unit.def.moveSpeed * layerMoveMultiplier(unit) * ccMul;
+
+      if (d > stopAt) {
+        unit.vx = dx / len * speed;
+        unit.vy = dy / len * speed;
+      } else {
+        unit.vx *= .5;
+        unit.vy *= .5;
+      }
+
+      unit.x = clamp(unit.x + unit.vx * dt, 28, 932);
+      unit.y = clamp(unit.y + unit.vy * dt, 34, 566);
+
+      if (d < reach && unit.cooldown <= 0) {
+        applyDamage(unit, target, unit.def.power, null);
+        unit.cooldown = unit.def.id === 'chicken' ? 1.8 : 1.15;
+      }
+      unit.action = target ? `${INSTINCTS[unit.instinct].name} ${target.def.name}` : '待命';
+    }
+
+    function resolveCollisions() {
+      for (let i = 0; i < state.units.length; i++) {
+        for (let j = i + 1; j < state.units.length; j++) {
+          const a = state.units[i];
+          const b = state.units[j];
+          if (a.dead || b.dead) continue;
+          const d = Math.max(1, dist(a, b));
+          const min = a.def.bodySize + b.def.bodySize;
+          if (d >= min) continue;
+          const nx = (b.x - a.x) / d;
+          const ny = (b.y - a.y) / d;
+          const push = (min - d) / 2;
+          a.x -= nx * push;
+          a.y -= ny * push;
+          b.x += nx * push;
+          b.y += ny * push;
+        }
+      }
+    }
+
+    function checkWinner() {
+      const blue = state.units.filter(u => u.side === 'blue' && !u.dead).length;
+      const red = state.units.filter(u => u.side === 'red' && !u.dead).length;
+      if (state.phase === 'battle' && (blue === 0 || red === 0)) {
+        state.phase = 'ended';
+        state.winner = blue > red ? '蓝队' : red > blue ? '红队' : '平局';
+        emit('end', `${state.winner} 获胜`, { x: 480, y: 90 });
+      }
+    }
+
+    function step(ts) {
+      if (!state.lastTs) state.lastTs = ts;
+      const dt = Math.min((ts - state.lastTs) / 1000, .05);
+      state.lastTs = ts;
+      if (state.phase === 'battle') {
+        state.time += dt;
+        if (state.activeOrder) {
+          state.activeOrder.t -= dt;
+          if (state.activeOrder.t <= 0) state.activeOrder = null;
+        }
+        state.units.forEach(u => updateUnit(u, dt));
+        resolveCollisions();
+        checkWinner();
+      }
+      state.effects.forEach(e => e.life -= dt);
+      state.effects = state.effects.filter(e => e.life > 0);
+      draw();
+      updateStats();
+      requestAnimationFrame(step);
+    }
+
+    function drawMap() {
+      ctx.fillStyle = '#33402f';
+      ctx.fillRect(0, 0, 960, 600);
+      ctx.fillStyle = '#2b6f90';
+      ctx.fillRect(410, 0, 150, 600);
+      ctx.fillStyle = 'rgba(169,213,230,.22)';
+      for (let y = 0; y < 620; y += 42) {
+        ctx.beginPath();
+        ctx.moveTo(410, y);
+        ctx.bezierCurveTo(450, y + 20, 520, y - 22, 560, y + 10);
+        ctx.strokeStyle = 'rgba(231,246,255,.42)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#7a6249';
+      roundRect(95, 95, 180, 115, 8, true);
+      roundRect(685, 390, 180, 115, 8, true);
+      ctx.fillStyle = '#485363';
+      ctx.fillRect(0, 0, 960, 22);
+      ctx.fillRect(0, 578, 960, 22);
+      ctx.strokeStyle = 'rgba(255,255,255,.14)';
+      ctx.setLineDash([8, 8]);
+      ctx.strokeRect(35, 55, 260, 490);
+      ctx.strokeRect(665, 55, 260, 490);
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(231,182,75,.22)';
+      ctx.beginPath();
+      ctx.arc(MAP.guardPoint.x, MAP.guardPoint.y, 58, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawUnit(unit) {
+      const r = unit.def.bodySize;
+      ctx.save();
+      ctx.globalAlpha = unit.dead ? .25 : 1;
+      if (unit.hitFlash > 0) ctx.shadowColor = '#fff', ctx.shadowBlur = 18;
+      ctx.translate(unit.x, unit.y);
+      ctx.fillStyle = 'rgba(0,0,0,.24)';
+      ctx.beginPath();
+      ctx.ellipse(0, r * .78, r * 1.25, r * .35, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = unit.def.color;
+      ctx.strokeStyle = unit.side === 'blue' ? '#70b8ff' : '#ff817b';
+      ctx.lineWidth = 3;
+      if (unit.def.id === 'eagle') {
+        ctx.beginPath();
+        ctx.moveTo(-r * 1.6, 0);
+        ctx.lineTo(0, -r * .65);
+        ctx.lineTo(r * 1.6, 0);
+        ctx.lineTo(0, r * .7);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } else if (unit.def.id === 'spider') {
+        for (let i = 0; i < 8; i++) {
+          const a = Math.PI * 2 / 8 * i;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(a) * r * .5, Math.sin(a) * r * .4);
+          ctx.lineTo(Math.cos(a) * r * 1.45, Math.sin(a) * r * 1.05);
+          ctx.strokeStyle = unit.def.color;
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.ellipse(0, 0, r, r * .78, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = unit.side === 'blue' ? '#70b8ff' : '#ff817b';
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.ellipse(0, 0, r * 1.08, r * .78, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.font = `${Math.max(18, r * 1.15)}px system-ui`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(unit.def.icon, 0, -r * 1.15);
+      ctx.fillStyle = '#101319';
+      ctx.fillRect(-r * 1.35, -r * 2.15, r * 2.7, 6);
+      ctx.fillStyle = unit.side === 'blue' ? '#4fa3ff' : '#e35d5b';
+      ctx.fillRect(-r * 1.35, -r * 2.15, r * 2.7 * (unit.hp / unit.maxHp), 6);
+      ctx.fillStyle = '#fff';
+      ctx.font = '11px system-ui';
+      ctx.fillText(`${Math.ceil(unit.hp)}`, 0, -r * 2.42);
+      ctx.restore();
+    }
+
+    function drawEffects() {
+      state.effects.forEach(e => {
+        const k = e.life / e.max;
+        ctx.save();
+        ctx.globalAlpha = clamp(k, 0, 1);
+        if (e.kind === 'hit') {
+          ctx.strokeStyle = e.color || '#fff';
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.arc(e.x, e.y, 30 * (1 - k), 0, Math.PI * 2);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = '#fff';
+          ctx.font = '16px system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText(e.text, e.x, e.y - (1 - k) * 28);
+        }
+        ctx.restore();
+      });
+    }
+
+    function draw() {
+      drawMap();
+      state.units.forEach(drawUnit);
+      if (state.phase === 'deploy') drawDeployHandles();
+      drawEffects();
+    }
+
+    function drawDeployHandles() {
+      [...state.blueTeam.map((s, i) => ['blue', i, s]), ...state.redTeam.map((s, i) => ['red', i, s])].forEach(([side, i, slot]) => {
+        ctx.save();
+        ctx.strokeStyle = side === 'blue' ? '#4fa3ff' : '#e35d5b';
+        ctx.setLineDash([5, 5]);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(slot.x, slot.y, 28, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = '#fff';
+        ctx.font = '13px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${side === 'blue' ? '蓝' : '红'}${i + 1}`, slot.x, slot.y + 44);
+        ctx.restore();
+      });
+    }
+
+    function roundRect(x, y, w, h, r, fill) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      if (fill) ctx.fill();
+      else ctx.stroke();
+    }
+
+    function renderAnimalGrid() {
+      const grid = document.getElementById('animalGrid');
+      grid.innerHTML = Object.values(ANIMALS).map(a => `
+        <button class="animal-card" data-animal="${a.id}">
+          <span class="icon">${a.icon}</span>
+          <span><span class="name">${a.name}</span><span class="role">${a.role}</span></span>
+        </button>
+      `).join('');
+      grid.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const list = state.selectedSide === 'blue' ? state.blueTeam : state.redTeam;
+          list[state.selectedSlot].animal = btn.dataset.animal;
+          rebuildDeployUnits();
+          renderTeams();
+        });
+      });
+    }
+
+    function renderTeams() {
+      renderTeam('blue');
+      renderTeam('red');
+    }
+
+    function renderTeam(side) {
+      const list = side === 'blue' ? state.blueTeam : state.redTeam;
+      const el = document.getElementById(side === 'blue' ? 'blueTeam' : 'redTeam');
+      el.innerHTML = list.map((slot, i) => {
+        const a = ANIMALS[slot.animal];
+        return `
+          <div class="slot" data-side="${side}" data-slot="${i}">
+            <button>
+              <div class="slot-title">${a.icon} ${i + 1}. ${a.name}</div>
+              <div class="slot-meta">${Math.round(slot.x)},${Math.round(slot.y)} · ${INSTINCTS[slot.instinct].name}</div>
+            </button>
+            <select>
+              ${Object.entries(INSTINCTS).map(([key, v]) => `<option value="${key}" ${slot.instinct === key ? 'selected' : ''}>${v.name}</option>`).join('')}
+            </select>
+          </div>
+        `;
+      }).join('');
+      el.querySelectorAll('.slot').forEach(row => {
+        row.querySelector('button').addEventListener('click', () => {
+          state.selectedSide = side;
+          state.selectedSlot = Number(row.dataset.slot);
+        });
+        row.querySelector('select').addEventListener('change', ev => {
+          list[Number(row.dataset.slot)].instinct = ev.target.value;
+          rebuildDeployUnits();
+          renderTeams();
+        });
+      });
+    }
+
+    function renderLog() {
+      const el = document.getElementById('eventLog');
+      el.innerHTML = state.log.map(l => `<div class="log-entry">${l.t.toFixed(1)}s · ${l.text}</div>`).join('');
+    }
+
+    function updateStats() {
+      const blue = state.units.filter(u => u.side === 'blue' && !u.dead).length || state.blueTeam.length;
+      const red = state.units.filter(u => u.side === 'red' && !u.dead).length || state.redTeam.length;
+      document.getElementById('blueAlive').textContent = blue;
+      document.getElementById('redAlive').textContent = red;
+      document.getElementById('ordersLeft').textContent = state.ordersLeft;
+      document.getElementById('timer').textContent = `${state.time.toFixed(1)}s`;
+      document.getElementById('battleState').textContent = state.phase === 'deploy' ? '部署阶段' : state.phase === 'battle' ? '战斗中' : `${state.winner}胜利`;
+      document.getElementById('startBattle').disabled = state.phase === 'battle';
+      document.querySelectorAll('.orders button').forEach(b => b.disabled = state.phase !== 'battle' || state.ordersLeft <= 0);
+    }
+
+    function rebuildDeployUnits() {
+      if (state.phase !== 'deploy') return;
+      state.units = [
+        ...state.blueTeam.map((s, i) => makeUnit('blue', i, s)),
+        ...state.redTeam.map((s, i) => makeUnit('red', i, s))
+      ];
+    }
+
+    function startBattle() {
+      state.phase = 'battle';
+      state.time = 0;
+      state.ordersLeft = 2;
+      state.activeOrder = null;
+      state.winner = null;
+      rebuildDeployUnits();
+      emit('start', '战斗开始：3v3 河谷全灭战', { x: 480, y: 95 });
+      updateStats();
+    }
+
+    function resetDeploy() {
+      state.phase = 'deploy';
+      state.time = 0;
+      state.ordersLeft = 2;
+      state.activeOrder = null;
+      state.winner = null;
+      state.log = [];
+      state.effects = [];
+      state.blueTeam.forEach((s, i) => { s.x = [180, 130, 205][i]; s.y = [210, 305, 395][i]; });
+      state.redTeam.forEach((s, i) => { s.x = [780, 830, 755][i]; s.y = [210, 305, 395][i]; });
+      rebuildDeployUnits();
+      renderLog();
+      updateStats();
+    }
+
+    function randomTeams() {
+      const keys = Object.keys(ANIMALS);
+      state.blueTeam.forEach(s => s.animal = keys[Math.floor(Math.random() * keys.length)]);
+      state.redTeam.forEach(s => s.animal = keys[Math.floor(Math.random() * keys.length)]);
+      rebuildDeployUnits();
+      renderTeams();
+    }
+
+    function useOrder(kind) {
+      if (state.phase !== 'battle' || state.ordersLeft <= 0) return;
+      if (kind === 'focus') {
+        const target = state.units.filter(u => u.side === 'red' && !u.dead).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+        if (!target) return;
+        state.activeOrder = { kind, targetId: target.uid, t: 5 };
+        emit('order', `集猎：全队盯住 ${target.def.name}`, { x: target.x, y: target.y });
+      }
+      if (kind === 'retreat') {
+        const target = state.units.filter(u => u.side === 'blue' && !u.dead).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+        if (!target) return;
+        state.activeOrder = { kind, targetId: target.uid, t: 4 };
+        emit('order', `撤退：${target.def.name} 后撤`, { x: target.x, y: target.y });
+      }
+      if (kind === 'guard') {
+        state.activeOrder = { kind, t: 5 };
+        emit('order', '守域：争夺河口', MAP.guardPoint);
+      }
+      state.ordersLeft -= 1;
+      updateStats();
+    }
+
+    function handleCanvasClick(ev) {
+      if (state.phase !== 'deploy') return;
+      const rect = canvas.getBoundingClientRect();
+      const x = (ev.clientX - rect.left) / rect.width * canvas.width;
+      const y = (ev.clientY - rect.top) / rect.height * canvas.height;
+      const list = state.selectedSide === 'blue' ? state.blueTeam : state.redTeam;
+      const safeX = state.selectedSide === 'blue' ? clamp(x, 55, 330) : clamp(x, 630, 905);
+      list[state.selectedSlot].x = safeX;
+      list[state.selectedSlot].y = clamp(y, 65, 535);
+      rebuildDeployUnits();
+      renderTeams();
+    }
+
+    document.getElementById('startBattle').addEventListener('click', startBattle);
+    document.getElementById('resetDeploy').addEventListener('click', resetDeploy);
+    document.getElementById('randomTeams').addEventListener('click', randomTeams);
+    document.getElementById('orderFocus').addEventListener('click', () => useOrder('focus'));
+    document.getElementById('orderRetreat').addEventListener('click', () => useOrder('retreat'));
+    document.getElementById('orderGuard').addEventListener('click', () => useOrder('guard'));
+    canvas.addEventListener('click', handleCanvasClick);
+
+    renderAnimalGrid();
+    renderTeams();
+    rebuildDeployUnits();
+    updateStats();
+    requestAnimationFrame(step);
+
+    window.__v2Game = {
+      state,
+      ANIMALS,
+      INSTINCTS,
+      MAP,
+      startBattle,
+      resetDeploy,
+      randomTeams,
+      useOrder
+    };
+  </script>
+</body>
+</html>
