@@ -6,7 +6,8 @@
  * 2. 数据驱动结构
  * 3. 开始 3v3 战斗
  * 4. 战术指令会消耗次数
- * 5. 战斗循环无 JS 报错
+ * 5. 生态导演和复盘结构
+ * 6. 战斗循环无 JS 报错
  */
 
 const puppeteer = require('puppeteer-core');
@@ -71,11 +72,17 @@ function check(name, condition, detail = '') {
     const data = await page.evaluate(() => ({
       animalCount: Object.keys(window.__v2Game.ANIMALS).length,
       instinctCount: Object.keys(window.__v2Game.INSTINCTS).length,
+      behaviorTagCount: Object.keys(window.__v2Game.BEHAVIOR_TAGS).length,
+      animalsWithTags: Object.values(window.__v2Game.ANIMALS).filter(a => a.behaviorTags && a.behaviorTags.length >= 2).length,
+      directorEventCount: window.__v2Game.DIRECTOR_EVENTS.length,
       zoneCount: window.__v2Game.MAP.zones.length,
       unitCount: window.__v2Game.state.units.length
     }));
     check('6 个 MVP 动物已注册', data.animalCount === 6, `实际 ${data.animalCount}`);
     check('4 种本能已注册', data.instinctCount === 4, `实际 ${data.instinctCount}`);
+    check('行为标签库已注册', data.behaviorTagCount >= 8, `实际 ${data.behaviorTagCount}`);
+    check('每个 MVP 动物都有行为标签', data.animalsWithTags === 6, `实际 ${data.animalsWithTags}`);
+    check('生态导演事件已注册', data.directorEventCount >= 3, `实际 ${data.directorEventCount}`);
     check('河谷空间层已注册', data.zoneCount >= 5, `实际 ${data.zoneCount}`);
     check('部署阶段 6 个单位', data.unitCount === 6, `实际 ${data.unitCount}`);
 
@@ -98,16 +105,33 @@ function check(name, condition, detail = '') {
     await page.click('#orderFocus');
     await sleep(200);
     await page.click('#orderGuard');
-    await sleep(1800);
+    await sleep(2600);
     const afterOrders = await page.evaluate(() => ({
       ordersLeft: window.__v2Game.state.ordersLeft,
       hasLog: window.__v2Game.state.log.length > 0,
+      directorEvents: window.__v2Game.state.director.events.length,
+      directorStatus: document.getElementById('directorStatus').textContent,
+      ordersUsed: window.__v2Game.state.recapStats.orders,
       phase: window.__v2Game.state.phase,
       time: window.__v2Game.state.time
     }));
     check('战术指令消耗次数', afterOrders.ordersLeft === 0, `实际 ${afterOrders.ordersLeft}`);
+    check('战术指令进入复盘统计', afterOrders.ordersUsed === 2, `实际 ${afterOrders.ordersUsed}`);
+    check('生态导演已触发事件', afterOrders.directorEvents >= 1, `实际 ${afterOrders.directorEvents}`);
+    check('河谷状态栏显示生态事件', afterOrders.directorStatus.includes('河谷状态：') && !afterOrders.directorStatus.includes('平静 · 紧张度 0%'));
     check('事件日志产生内容', afterOrders.hasLog);
     check('战斗循环仍正常', ['battle', 'ended'].includes(afterOrders.phase));
+
+    await page.evaluate(() => window.__v2Game.forceEndForTest());
+    await sleep(250);
+    const review = await page.evaluate(() => ({
+      phase: window.__v2Game.state.phase,
+      screen: window.__v2Game.state.screen,
+      recapCount: document.querySelectorAll('#recap p').length,
+      recapText: document.getElementById('recap').textContent
+    }));
+    check('结束后切到复盘画面', review.phase === 'ended' && review.screen === 'review', `实际 ${review.phase}/${review.screen}`);
+    check('复盘生成关键因果', review.recapCount >= 2 && review.recapText.includes('生态导演'), `实际 ${review.recapText}`);
 
     check('全程无 JS 报错', errors.length === 0, errors.slice(0, 3).join('; '));
   } catch (err) {
