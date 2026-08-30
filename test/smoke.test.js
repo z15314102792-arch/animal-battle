@@ -13,12 +13,18 @@
 
 const puppeteer = require('puppeteer-core');
 const path = require('path');
+const fs = require('fs');
 
 const GAME_URL = 'file:///' + path.resolve(__dirname, '..', 'index.html').replace(/\\/g, '/');
 const BATTLE_DURATION = 6000; // 对战跑多久（毫秒）
 
-// 本机 Chrome 路径
-const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const BROWSER_PATHS = [
+  'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+  'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+  'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+  'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
+];
+const BROWSER_PATH = BROWSER_PATHS.find(p => fs.existsSync(p));
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -39,10 +45,14 @@ function check(name, condition, detail = '') {
   console.log('🧪 动物大战冒烟测试');
   console.log(`   页面: ${GAME_URL}`);
   console.log('');
+  if (!BROWSER_PATH) {
+    console.log('💥 测试脚本崩溃: 未找到 Chrome 或 Edge 浏览器');
+    process.exit(1);
+  }
 
   const browser = await puppeteer.launch({
     headless: 'new',
-    executablePath: CHROME_PATH,
+    executablePath: BROWSER_PATH,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
 

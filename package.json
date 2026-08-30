@@ -8,7 +8,9 @@
   },
   "scripts": {
     "test": "node test/smoke.test.js",
-    "smoke": "node test/smoke.test.js"
+    "smoke": "node test/smoke.test.js",
+    "test:v2": "node test/v2.smoke.test.js",
+    "test:v2:visual": "node test/v2.visual.test.js"
   },
   "repository": {
     "type": "git",
