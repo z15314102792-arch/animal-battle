@@ -23,7 +23,7 @@ async function capture(browser, viewport, name) {
   const page = await browser.newPage();
   await page.setViewport(viewport);
   await page.goto(GAME_URL, { waitUntil: 'networkidle0', timeout: 15000 });
-  await page.click('#startBattle');
+  await page.click('#screenHome [data-start="1"]');
   await sleep(1200);
   const stats = await page.evaluate(() => {
     const canvas = document.getElementById('battlefield');
@@ -35,9 +35,12 @@ async function capture(browser, viewport, name) {
     }
     return {
       phase: window.__v2Game.state.phase,
+      screen: window.__v2Game.state.screen,
       time: window.__v2Game.state.time,
       units: window.__v2Game.state.units.length,
-      nonblankRatio: nonblank / (data.length / 4)
+      nonblankRatio: nonblank / (data.length / 4),
+      viewportHeight: window.innerHeight,
+      bodyScrollHeight: document.body.scrollHeight
     };
   });
   const screenshot = path.join(OUTPUT_DIR, `animal-battle-v2-${name}.png`);
@@ -60,10 +63,13 @@ async function capture(browser, viewport, name) {
   try {
     const results = [];
     results.push(await capture(browser, { width: 1280, height: 900 }, 'desktop'));
-    results.push(await capture(browser, { width: 390, height: 844, isMobile: true }, 'mobile'));
+    results.push(await capture(browser, { width: 320, height: 780, isMobile: true }, 'mobile-320'));
+    results.push(await capture(browser, { width: 375, height: 812, isMobile: true }, 'mobile-375'));
+    results.push(await capture(browser, { width: 414, height: 896, isMobile: true }, 'mobile-414'));
+    results.push(await capture(browser, { width: 768, height: 1024, isMobile: true }, 'tablet-768'));
     for (const result of results) {
       console.log(`${result.name}: ${JSON.stringify(result.stats)} -> ${result.screenshot}`);
-      if (result.stats.units !== 6 || result.stats.time <= 0.5 || result.stats.nonblankRatio < 0.9) {
+      if (result.stats.units !== 6 || result.stats.time <= 0.5 || result.stats.nonblankRatio < 0.9 || result.stats.bodyScrollHeight > result.stats.viewportHeight + 2) {
         process.exitCode = 1;
       }
     }

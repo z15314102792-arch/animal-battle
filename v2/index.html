@@ -3,939 +3,272 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>动物大战 2.0 v0.1</title>
+  <title>动物大战 2.0 v0.2</title>
+  <link rel="stylesheet" href="./tokens.css">
   <style>
-    /* Hallmark · macrostructure: Tool Surface · tone: tactical game console · anchor hue: river-blue */
-    :root {
-      color-scheme: dark;
-      --bg: #101319;
-      --panel: #1a2029;
-      --panel-2: #232b35;
-      --line: #344150;
-      --text: #edf2f7;
-      --muted: #aab6c3;
-      --red: #e35d5b;
-      --blue: #4fa3ff;
-      --green: #59c88a;
-      --gold: #e7b64b;
-      --water: #326f92;
-      --mud: #7a6249;
-    }
-
     * { box-sizing: border-box; }
-
-    html, body { overflow-x: clip; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    .app {
-      width: min(1180px, 100%);
-      margin: 0 auto;
-      padding: 14px;
-      display: grid;
-      grid-template-columns: 330px minmax(360px, 1fr) 320px;
-      gap: 12px;
-    }
-
-    .topbar {
-      grid-column: 1 / -1;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 10px 12px;
-      border: 1px solid var(--line);
-      background: #161b22;
-    }
-
-    .brand { display: flex; flex-direction: column; gap: 2px; }
-    .brand strong { font-size: 20px; }
-    .brand span { color: var(--muted); font-size: 12px; }
-
-    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+    body { background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); }
     button, select {
-      border: 1px solid var(--line);
-      background: var(--panel-2);
-      color: var(--text);
-      min-height: 34px;
-      padding: 7px 10px;
+      min-height: 40px;
+      border: var(--rule-thin) solid var(--color-line);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface-2);
+      color: var(--color-text);
       font: inherit;
       cursor: pointer;
+      transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
     }
-
-    button:hover { border-color: #5b6d82; }
-    button:focus-visible, select:focus-visible { outline: 3px solid #e7b64b; outline-offset: 2px; }
+    button:hover { border-color: var(--color-gold); }
+    button:focus-visible, select:focus-visible { outline: 3px solid var(--color-gold); outline-offset: 2px; }
     button:active { transform: translateY(1px); }
-    button.primary { background: #245b8f; border-color: #3678b8; }
-    button.danger { background: #713331; border-color: #96514e; }
-    button:disabled { opacity: .45; cursor: not-allowed; }
-
-    .panel {
-      border: 1px solid var(--line);
-      background: var(--panel);
-      min-height: 0;
-    }
-
-    .panel h2 {
-      margin: 0;
-      padding: 10px 12px;
-      font-size: 15px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .section { padding: 10px 12px; border-bottom: 1px solid #2a3440; }
-    .section:last-child { border-bottom: 0; }
-    .label { color: var(--muted); font-size: 12px; margin-bottom: 7px; }
-
-    .animal-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .animal-card {
-      border: 1px solid var(--line);
-      background: #202833;
-      padding: 8px;
-      display: grid;
-      grid-template-columns: 36px 1fr;
-      gap: 8px;
-      align-items: center;
-      min-height: 72px;
-    }
-
-    .animal-card.selected { outline: 2px solid var(--gold); }
-    .icon { font-size: 26px; line-height: 1; }
-    .name { font-weight: 700; font-size: 14px; }
-    .role { color: var(--muted); font-size: 12px; margin-top: 2px; }
-
-    .team-list { display: grid; gap: 7px; }
-
-    .slot {
-      display: grid;
-      grid-template-columns: 1fr 92px;
-      gap: 8px;
-      align-items: center;
-      border: 1px solid var(--line);
-      background: #151b23;
-      padding: 8px;
-    }
-
-    .slot-title { font-size: 13px; font-weight: 700; }
-    .slot-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
-    .slot select { width: 92px; min-height: 30px; padding: 4px 6px; font-size: 12px; }
-
-    .battle-wrap {
-      display: grid;
-      grid-template-rows: auto auto auto;
-      align-self: start;
-    }
-
-    .battle-head {
+    button:disabled { cursor: not-allowed; opacity: .42; }
+    .app-shell { height: 100dvh; display: grid; grid-template-rows: 64px 1fr 58px; overflow: hidden; }
+    .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--line);
-      gap: 8px;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      border-bottom: var(--rule-thin) solid var(--color-line);
+      background: var(--color-surface);
     }
-
-    .battle-head strong { font-size: 15px; }
-    .battle-head span { color: var(--muted); font-size: 12px; }
-
-    canvas {
-      width: 100%;
-      height: auto;
-      aspect-ratio: 16 / 10;
-      display: block;
-      background: #202a28;
+    .brand { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .brand strong { font-family: var(--font-display); font-size: var(--text-lg); line-height: 1.05; overflow-wrap: anywhere; }
+    .brand span { color: var(--color-muted); font-size: var(--text-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .top-actions { display: flex; gap: var(--space-2); }
+    .top-actions button { padding: 0 var(--space-3); white-space: nowrap; }
+    .screen { min-height: 0; display: none; overflow: hidden; padding: var(--space-4); }
+    .screen.active { display: block; }
+    .home { height: 100%; display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: var(--space-4); align-items: stretch; }
+    .screen-grid { height: 100%; display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: var(--space-4); min-height: 0; }
+    .battle-grid { height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: var(--space-4); min-height: 0; }
+    .panel { min-height: 0; border: var(--rule-thin) solid var(--color-line); border-radius: var(--radius-md); background: var(--color-surface); overflow: hidden; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3); border-bottom: var(--rule-thin) solid var(--color-line); }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: var(--text-xl); line-height: 1.04; }
+    h2 { font-size: var(--text-md); }
+    .muted { color: var(--color-muted); font-size: var(--text-xs); }
+    .hero-panel { padding: var(--space-6); display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-5); }
+    .hero-copy { display: grid; gap: var(--space-3); }
+    .hero-copy p { color: var(--color-muted); line-height: 1.55; }
+    .hero-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+    .hero-actions button { min-height: 52px; }
+    .primary { background: color-mix(in oklch, var(--color-blue) 42%, var(--color-surface-2)); border-color: var(--color-blue); }
+    .danger { background: color-mix(in oklch, var(--color-red) 36%, var(--color-surface-2)); border-color: var(--color-red); }
+    .wide-canvas { height: 100%; display: grid; grid-template-rows: 1fr; background: var(--color-surface); }
+    .canvas-stage { width: 100%; height: 100%; min-height: 0; display: grid; place-items: center; padding: var(--space-3); }
+    canvas { display: block; width: 100%; max-height: 100%; aspect-ratio: 16 / 10; border: var(--rule-thin) solid var(--color-line); border-radius: var(--radius-sm); background: var(--color-surface-3); }
+    .animal-grid { height: 100%; overflow: auto; padding: var(--space-3); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(82px, auto); gap: var(--space-3); }
+    .animal-card { padding: var(--space-2); display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: var(--space-2); align-items: center; text-align: left; }
+    .animal-card.active { border-color: var(--color-gold); background: var(--color-surface-3); }
+    .sigil { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; background: var(--color-surface-3); color: var(--color-gold); }
+    .card-copy { display: grid; gap: 3px; min-width: 0; }
+    .card-copy strong, .slot-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .teams { height: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); min-height: 0; }
+    .team-column { display: grid; grid-template-rows: auto 1fr; min-height: 0; }
+    .team-list { overflow: auto; padding: var(--space-3); display: grid; align-content: start; gap: var(--space-3); }
+    .slot { display: grid; grid-template-columns: minmax(0, 1fr) 108px; gap: var(--space-2); align-items: center; padding: var(--space-2); border: var(--rule-thin) solid var(--color-line); border-radius: var(--radius-sm); background: var(--color-surface-2); }
+    .slot button { text-align: left; padding: 0 var(--space-2); }
+    .slot select { width: 100%; padding: 0 var(--space-2); }
+    .deploy-panel { height: 100%; display: grid; grid-template-rows: auto auto 1fr auto; }
+    .deploy-help, .battle-status, .recap-box { padding: var(--space-3); color: var(--color-muted); font-size: var(--text-sm); line-height: 1.5; }
+    .orders { display: grid; grid-template-columns: 1fr; gap: var(--space-2); padding: var(--space-3); }
+    .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); padding: var(--space-3); }
+    .stat { padding: var(--space-3); border: var(--rule-thin) solid var(--color-line); border-radius: var(--radius-sm); background: var(--color-surface-2); }
+    .stat b { display: block; font-size: var(--text-lg); }
+    .log { height: 210px; overflow: auto; padding: var(--space-3); display: grid; align-content: start; gap: var(--space-2); font-size: var(--text-xs); }
+    .log-entry { padding: var(--space-2); border-left: 3px solid var(--color-blue); background: color-mix(in oklch, var(--color-surface-2) 78%, black); }
+    .bottom-nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-2); padding: var(--space-2); border-top: var(--rule-thin) solid var(--color-line); background: var(--color-surface); }
+    .bottom-nav button { min-width: 0; white-space: nowrap; padding: 0 var(--space-2); }
+    .bottom-nav button.active { border-color: var(--color-gold); color: var(--color-gold); }
+    @media (max-width: 820px) {
+      .app-shell { grid-template-rows: 72px 1fr 58px; }
+      .top-actions { display: none; }
+      .screen { padding: var(--space-2); }
+      .home, .screen-grid, .battle-grid, .teams { grid-template-columns: 1fr; }
+      .home { grid-template-rows: .88fr 1.12fr; }
+      .screen-grid, .battle-grid { gap: var(--space-2); }
+      .animal-grid { grid-template-columns: 1fr 1fr; }
+      .battle-grid { grid-template-rows: minmax(0, 1fr) 230px; }
+      .status-grid { grid-template-columns: repeat(4, 1fr); }
+      .stat { padding: var(--space-2); }
+      .stat b { font-size: var(--text-md); }
+      .orders { grid-template-columns: repeat(3, 1fr); }
+      .orders button { font-size: var(--text-xs); }
+      .log { height: 86px; }
+      .bottom-nav button { font-size: var(--text-xs); }
     }
-
-    .orders {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      padding: 10px 12px;
-      border-top: 1px solid var(--line);
+    @media (max-width: 430px) {
+      .brand strong { font-size: 18px; }
+      .brand span { font-size: 11px; }
+      .hero-panel { padding: var(--space-4); }
+      .hero-actions { grid-template-columns: 1fr; }
+      .animal-grid { gap: var(--space-2); padding: var(--space-2); }
+      .animal-card { grid-template-columns: 36px minmax(0, 1fr); min-height: 70px; }
+      .sigil { width: 32px; height: 32px; }
+      .slot { grid-template-columns: minmax(0, 1fr) 92px; }
+      .status-grid { grid-template-columns: 1fr 1fr; }
+      .battle-grid { grid-template-rows: minmax(0, 1fr) 318px; }
+      #screenBattle .panel-head { padding: var(--space-2) var(--space-3); }
+      #screenBattle .status-grid { padding: var(--space-2); }
+      #screenBattle .orders { padding: var(--space-2); }
+      #screenBattle .orders button { min-height: 36px; }
+      #screenBattle .log { height: 58px; padding: var(--space-2); }
     }
-
-    .orders button { min-width: 0; }
-    .log {
-      height: 270px;
-      overflow: auto;
-      padding: 10px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 13px;
-    }
-
-    .log-entry {
-      border-left: 3px solid #4c5a6b;
-      background: #151b23;
-      padding: 7px 8px;
-      color: #dbe3ec;
-    }
-
-    .status-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .stat {
-      background: #151b23;
-      border: 1px solid #2b3541;
-      padding: 8px;
-    }
-
-    .stat b { display: block; font-size: 18px; }
-    .stat span { color: var(--muted); font-size: 12px; }
-
-    .legend {
-      display: grid;
-      gap: 7px;
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .swatch {
-      display: inline-block;
-      width: 14px;
-      height: 9px;
-      margin-right: 6px;
-      border: 1px solid rgba(255,255,255,.25);
-    }
-
-    @media (max-width: 980px) {
-      .app { grid-template-columns: 1fr; }
-      canvas { aspect-ratio: 4 / 3; }
-    }
+    @media (prefers-reduced-motion: reduce) { * { transition-duration: 1ms !important; animation-duration: 1ms !important; } }
   </style>
 </head>
 <body>
-  <main class="app">
+  <main class="app-shell">
     <header class="topbar">
       <div class="brand">
-        <strong>动物大战 2.0 v0.1</strong>
-        <span>3v3 生态策略乱斗 · 河谷原型 · Battle Director</span>
+        <strong>动物大战 2.0 v0.2</strong>
+        <span id="entryText">公网入口：GitHub Pages /v2/ · 3v3 河谷 Battle Director</span>
       </div>
-      <div class="toolbar">
+      <div class="top-actions">
         <button id="randomTeams">随机队伍</button>
         <button id="resetDeploy">重置部署</button>
         <button id="startBattle" class="primary">开始战斗</button>
       </div>
     </header>
 
-    <aside class="panel">
-      <h2>队伍与本能</h2>
-      <section class="section">
-        <div class="label">可选动物</div>
-        <div id="animalGrid" class="animal-grid"></div>
-      </section>
-      <section class="section">
-        <div class="label">蓝队</div>
-        <div id="blueTeam" class="team-list"></div>
-      </section>
-      <section class="section">
-        <div class="label">红队</div>
-        <div id="redTeam" class="team-list"></div>
-      </section>
-    </aside>
-
-    <section class="panel battle-wrap">
-      <div class="battle-head">
-        <strong>河谷战场</strong>
-        <span id="battleState">部署阶段</span>
-      </div>
-      <canvas id="battlefield" width="960" height="600"></canvas>
-      <div class="orders">
-        <button id="orderFocus">集猎目标</button>
-        <button id="orderRetreat">撤退受伤者</button>
-        <button id="orderGuard">守住河口</button>
+    <section id="screenHome" class="screen active">
+      <div class="home">
+        <div class="panel hero-panel">
+          <div class="hero-copy">
+            <h1>先部署，再看生态自己打出来。</h1>
+            <p>新版把旧版“选完就看”拆成几个可控阶段：组队、本能、部署、战斗、复盘。开始后自动切到战斗画面，地图更大，信息更少，对战更清楚。</p>
+          </div>
+          <div class="hero-actions">
+            <button class="primary" data-go="team">进入组队</button>
+            <button data-go="battle" data-start="1">快速开战</button>
+          </div>
+        </div>
+        <div class="panel wide-canvas"><div class="canvas-stage" id="homeStage"><canvas id="battlefield" width="960" height="600"></canvas></div></div>
       </div>
     </section>
 
-    <aside class="panel">
-      <h2>战况</h2>
-      <section class="section">
-        <div class="status-grid">
-          <div class="stat"><b id="blueAlive">3</b><span>蓝队存活</span></div>
-          <div class="stat"><b id="redAlive">3</b><span>红队存活</span></div>
-          <div class="stat"><b id="ordersLeft">2</b><span>剩余指令</span></div>
-          <div class="stat"><b id="timer">0.0s</b><span>战斗时间</span></div>
+    <section id="screenTeam" class="screen">
+      <div class="screen-grid">
+        <aside class="panel">
+          <div class="panel-head"><h2>动物库</h2><span class="muted">点击后替换当前槽位</span></div>
+          <div id="animalGrid" class="animal-grid"></div>
+        </aside>
+        <div class="teams">
+          <section class="panel team-column"><div class="panel-head"><h2>蓝队</h2><span class="muted">你的队伍</span></div><div id="blueTeam" class="team-list"></div></section>
+          <section class="panel team-column"><div class="panel-head"><h2>红队</h2><span class="muted">对手样板</span></div><div id="redTeam" class="team-list"></div></section>
         </div>
-      </section>
-      <section class="section">
-        <div class="label">空间层</div>
-        <div class="legend">
-          <div><span class="swatch" style="background:#33402f"></span>Ground：多数动物活动区</div>
-          <div><span class="swatch" style="background:#326f92"></span>Water：鳄鱼/乌龟优势区</div>
-          <div><span class="swatch" style="background:#7a6249"></span>HighGround：高地预留</div>
-          <div><span class="swatch" style="background:#485363"></span>Wall：蜘蛛可攀附</div>
-          <div><span class="swatch" style="background:#57708c"></span>Air：鹰盘旋层</div>
-        </div>
-      </section>
-      <section class="section">
-        <div class="label">事件日志</div>
-        <div id="eventLog" class="log"></div>
-      </section>
-    </aside>
+      </div>
+    </section>
+
+    <section id="screenDeploy" class="screen">
+      <div class="screen-grid">
+        <aside class="panel deploy-panel">
+          <div class="panel-head"><h2>部署</h2><span class="muted">选槽位，再点地图</span></div>
+          <div class="deploy-help">蓝队只能部署在左侧，红队只能部署在右侧。站位会影响开局索敌、河谷路线和第一轮接触。</div>
+          <div class="orders">
+            <button data-pick="blue-0">蓝队 1 号</button><button data-pick="blue-1">蓝队 2 号</button><button data-pick="blue-2">蓝队 3 号</button>
+            <button data-pick="red-0">红队 1 号</button><button data-pick="red-1">红队 2 号</button><button data-pick="red-2">红队 3 号</button>
+          </div>
+          <div class="deploy-help">当前槽位：<b id="deployPick">蓝队 1 号</b></div>
+        </aside>
+        <section class="panel wide-canvas"><div class="canvas-stage"></div></section>
+      </div>
+    </section>
+
+    <section id="screenBattle" class="screen">
+      <div class="battle-grid">
+        <section class="panel wide-canvas"><div class="canvas-stage"></div></section>
+        <aside class="panel">
+          <div class="panel-head"><h2>战斗</h2><span id="battleState" class="muted">部署阶段</span></div>
+          <div class="status-grid">
+            <div class="stat"><b id="blueAlive">3</b><span class="muted">蓝队</span></div><div class="stat"><b id="redAlive">3</b><span class="muted">红队</span></div>
+            <div class="stat"><b id="ordersLeft">2</b><span class="muted">指令</span></div><div class="stat"><b id="timer">0.0s</b><span class="muted">时间</span></div>
+          </div>
+          <div class="orders"><button id="orderFocus">集猎目标</button><button id="orderRetreat">撤退受伤者</button><button id="orderGuard">守住河口</button></div>
+          <div id="eventLog" class="log"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="screenReview" class="screen">
+      <div class="screen-grid">
+        <section class="panel wide-canvas"><div class="canvas-stage"></div></section>
+        <aside class="panel">
+          <div class="panel-head"><h2>复盘</h2><span class="muted">关键因果</span></div>
+          <div id="recap" class="recap-box">战斗结束后，这里会显示关键因果。</div>
+          <div class="orders"><button data-go="team">调整队伍</button><button data-go="deploy">重新部署</button><button class="primary" data-go="battle" data-start="1">再打一局</button></div>
+        </aside>
+      </div>
+    </section>
+
+    <nav class="bottom-nav">
+      <button data-go="home" class="active">入口</button><button data-go="team">组队</button><button data-go="deploy">部署</button><button data-go="battle">战斗</button><button data-go="review">复盘</button>
+    </nav>
   </main>
 
   <script>
-    const VERSION = '2.0-v0.1';
-    const TAGS = {
-      Ground: 'Ground',
-      Water: 'Water',
-      HighGround: 'HighGround',
-      Wall: 'Wall',
-      Air: 'Air',
-      Tank: 'Tank',
-      Control: 'Control',
-      Predator: 'Predator',
-      Support: 'Support'
-    };
-
-    const INSTINCTS = {
-      hunt: { name: '猎杀', desc: '优先残血和落单目标' },
-      territory: { name: '领地', desc: '守住部署区和关键地形' },
-      herd: { name: '护群', desc: '保持队友距离' },
-      prowl: { name: '游猎', desc: '寻找侧翼和理想距离' }
-    };
-
+    const VERSION = '2.0-v0.2';
+    const TAGS = { Ground: 'Ground', Water: 'Water', HighGround: 'HighGround', Wall: 'Wall', Air: 'Air', Tank: 'Tank', Control: 'Control', Predator: 'Predator', Support: 'Support' };
+    const INSTINCTS = { hunt: { name: '猎杀', desc: '优先残血目标' }, territory: { name: '领地', desc: '守住关键地形' }, herd: { name: '护群', desc: '靠近队友行动' }, prowl: { name: '游猎', desc: '寻找侧翼空间' } };
     const ANIMALS = {
-      bull: {
-        id: 'bull', icon: '🐂', name: '公牛', role: '冲撞前排',
-        health: 245, power: 22, moveSpeed: 62, mass: 90, bodySize: 23, attackReach: 34,
-        layers: [TAGS.Ground], tags: [TAGS.Tank, TAGS.Control],
-        color: '#8b5b38', accent: '#e5d2a4'
-      },
-      eagle: {
-        id: 'eagle', icon: '🦅', name: '鹰', role: '空中刺客',
-        health: 135, power: 28, moveSpeed: 82, mass: 32, bodySize: 17, attackReach: 45,
-        layers: [TAGS.Air], tags: [TAGS.Predator],
-        color: '#8f8b78', accent: '#f1f1df'
-      },
-      turtle: {
-        id: 'turtle', icon: '🐢', name: '乌龟', role: '防线锚点',
-        health: 260, power: 13, moveSpeed: 34, mass: 78, bodySize: 21, attackReach: 28,
-        layers: [TAGS.Ground, TAGS.Water], tags: [TAGS.Tank],
-        color: '#4d8a58', accent: '#a8d07d'
-      },
-      chicken: {
-        id: 'chicken', icon: '🐔', name: '母鸡', role: '后排召唤',
-        health: 150, power: 12, moveSpeed: 54, mass: 22, bodySize: 16, attackReach: 92,
-        layers: [TAGS.Ground], tags: [TAGS.Support],
-        color: '#d9b35d', accent: '#e85d4f'
-      },
-      crocodile: {
-        id: 'crocodile', icon: '🐊', name: '鳄鱼', role: '水域伏击',
-        health: 230, power: 25, moveSpeed: 44, mass: 82, bodySize: 24, attackReach: 38,
-        layers: [TAGS.Water, TAGS.Ground], tags: [TAGS.Predator, TAGS.Control],
-        color: '#315f43', accent: '#9ac66f'
-      },
-      spider: {
-        id: 'spider', icon: '🕷️', name: '蜘蛛', role: '织网控制',
-        health: 125, power: 14, moveSpeed: 68, mass: 18, bodySize: 15, attackReach: 70,
-        layers: [TAGS.Wall, TAGS.Ground], tags: [TAGS.Control],
-        color: '#493f51', accent: '#c7b8d8'
-      }
+      bull: { id: 'bull', mark: '牛', name: '公牛', role: '冲撞前排', health: 245, power: 22, moveSpeed: 62, mass: 90, bodySize: 24, attackReach: 34, layers: [TAGS.Ground], tags: [TAGS.Tank, TAGS.Control], color: '#8b5b38', accent: '#e5d2a4' },
+      eagle: { id: 'eagle', mark: '鹰', name: '鹰', role: '空中刺客', health: 135, power: 28, moveSpeed: 86, mass: 32, bodySize: 18, attackReach: 48, layers: [TAGS.Air], tags: [TAGS.Predator], color: '#6f6758', accent: '#f1f1df' },
+      turtle: { id: 'turtle', mark: '龟', name: '乌龟', role: '防线锚点', health: 260, power: 13, moveSpeed: 34, mass: 78, bodySize: 22, attackReach: 28, layers: [TAGS.Ground, TAGS.Water], tags: [TAGS.Tank], color: '#4d8a58', accent: '#a8d07d' },
+      chicken: { id: 'chicken', mark: '鸡', name: '母鸡', role: '后排召唤', health: 150, power: 12, moveSpeed: 54, mass: 22, bodySize: 17, attackReach: 94, layers: [TAGS.Ground], tags: [TAGS.Support], color: '#d9b35d', accent: '#e85d4f' },
+      crocodile: { id: 'crocodile', mark: '鳄', name: '鳄鱼', role: '水域伏击', health: 230, power: 25, moveSpeed: 44, mass: 82, bodySize: 25, attackReach: 40, layers: [TAGS.Water, TAGS.Ground], tags: [TAGS.Predator, TAGS.Control], color: '#315f43', accent: '#9ac66f' },
+      spider: { id: 'spider', mark: '蛛', name: '蜘蛛', role: '织网控制', health: 125, power: 14, moveSpeed: 70, mass: 18, bodySize: 16, attackReach: 74, layers: [TAGS.Wall, TAGS.Ground], tags: [TAGS.Control], color: '#493f51', accent: '#c7b8d8' }
     };
-
-    const MAP = {
-      name: '河谷',
-      zones: [
-        { id: 'river', layer: TAGS.Water, x: 410, y: 0, w: 150, h: 600 },
-        { id: 'leftHigh', layer: TAGS.HighGround, x: 95, y: 95, w: 180, h: 115 },
-        { id: 'rightHigh', layer: TAGS.HighGround, x: 685, y: 390, w: 180, h: 115 },
-        { id: 'northWall', layer: TAGS.Wall, x: 0, y: 0, w: 960, h: 22 },
-        { id: 'southWall', layer: TAGS.Wall, x: 0, y: 578, w: 960, h: 22 }
-      ],
-      guardPoint: { x: 480, y: 300 }
-    };
-
+    const MAP = { name: '河谷', guardPoint: { x: 480, y: 300 }, zones: [{ id: 'river', layer: TAGS.Water, x: 410, y: 0, w: 150, h: 600 }, { id: 'leftHigh', layer: TAGS.HighGround, x: 92, y: 96, w: 182, h: 118 }, { id: 'rightHigh', layer: TAGS.HighGround, x: 686, y: 386, w: 182, h: 118 }, { id: 'northWall', layer: TAGS.Wall, x: 0, y: 0, w: 960, h: 22 }, { id: 'southWall', layer: TAGS.Wall, x: 0, y: 578, w: 960, h: 22 }] };
     const canvas = document.getElementById('battlefield');
     const ctx = canvas.getContext('2d');
-    const state = {
-      phase: 'deploy',
-      blueTeam: [
-        { animal: 'bull', instinct: 'territory', x: 180, y: 210 },
-        { animal: 'chicken', instinct: 'herd', x: 130, y: 305 },
-        { animal: 'eagle', instinct: 'hunt', x: 205, y: 395 }
-      ],
-      redTeam: [
-        { animal: 'crocodile', instinct: 'hunt', x: 780, y: 210 },
-        { animal: 'turtle', instinct: 'territory', x: 830, y: 305 },
-        { animal: 'spider', instinct: 'prowl', x: 755, y: 395 }
-      ],
-      units: [],
-      effects: [],
-      log: [],
-      selectedSide: 'blue',
-      selectedSlot: 0,
-      selectedUnitId: null,
-      ordersLeft: 2,
-      activeOrder: null,
-      time: 0,
-      lastTs: 0,
-      winner: null
-    };
-
-    function emit(type, text, data = {}) {
-      state.log.unshift({ type, text, t: state.time, data });
-      state.log = state.log.slice(0, 20);
-      state.effects.push({ kind: 'text', text, x: data.x || 480, y: data.y || 80, life: 1.5, max: 1.5 });
-      renderLog();
-    }
-
-    function makeUnit(side, slot, cfg) {
-      const def = ANIMALS[cfg.animal];
-      return {
-        uid: `${side}-${slot}-${def.id}`,
-        side, slot,
-        def,
-        instinct: cfg.instinct,
-        x: cfg.x,
-        y: cfg.y,
-        vx: 0,
-        vy: 0,
-        hp: def.health,
-        maxHp: def.health,
-        cooldown: 0,
-        cc: null,
-        action: '部署',
-        orderBias: null,
-        dead: false,
-        desiredLayer: def.layers[0],
-        hitFlash: 0
-      };
-    }
-
-    function dist(a, b) {
-      return Math.hypot(a.x - b.x, a.y - b.y);
-    }
-
-    function clamp(v, min, max) {
-      return Math.max(min, Math.min(max, v));
-    }
-
-    function zoneAt(x, y) {
-      for (const z of MAP.zones) {
-        if (x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h) return z.layer;
-      }
-      return TAGS.Ground;
-    }
-
-    function layerMoveMultiplier(unit) {
-      const layer = zoneAt(unit.x, unit.y);
-      if (unit.def.layers.includes(layer)) return 1;
-      if (layer === TAGS.Water) return 0.48;
-      if (layer === TAGS.HighGround) return 0.82;
-      if (layer === TAGS.Wall) return 0.65;
-      return 1;
-    }
-
-    function scoreTarget(unit, target) {
-      const d = Math.max(1, dist(unit, target));
-      const hpRatio = target.hp / target.maxHp;
-      let score = 1000 / d + (1 - hpRatio) * 2.2;
-      if (unit.instinct === 'hunt') score += (1 - hpRatio) * 3 + (d < 210 ? 0.8 : 0);
-      if (unit.instinct === 'territory') {
-        const homeX = unit.side === 'blue' ? 180 : 780;
-        score += Math.max(0, 1.3 - Math.abs(target.x - homeX) / 280);
-      }
-      if (unit.instinct === 'herd') {
-        const friendNear = state.units.some(u => u.side === unit.side && u.uid !== unit.uid && !u.dead && dist(u, unit) < 150);
-        if (friendNear) score += 0.9;
-      }
-      if (unit.instinct === 'prowl') score += Math.abs(target.y - unit.y) / 420;
-      if (state.activeOrder?.kind === 'focus' && state.activeOrder.targetId === target.uid) score += 5;
-      return score;
-    }
-
-    function chooseTarget(unit) {
-      const enemies = state.units.filter(u => u.side !== unit.side && !u.dead);
-      if (!enemies.length) return null;
-      return enemies.map(e => [scoreTarget(unit, e), e]).sort((a, b) => b[0] - a[0])[0][1];
-    }
-
-    function applyDamage(source, target, amount, tag) {
-      if (target.dead) return;
-      let final = amount;
-      if (target.def.id === 'turtle') final *= 0.72;
-      target.hp -= final;
-      target.hitFlash = 0.16;
-      state.effects.push({ kind: 'hit', x: target.x, y: target.y, life: .35, max: .35, color: source.def.accent });
-      if (target.hp <= 0) {
-        target.hp = 0;
-        target.dead = true;
-        emit('kill', `${source.def.name} 击败 ${target.def.name}`, { x: target.x, y: target.y });
-      } else if (tag) {
-        emit('hit', tag, { x: target.x, y: target.y });
-      }
-    }
-
-    function specialAction(unit, target) {
-      if (!target || unit.cooldown > 0) return false;
-      const d = dist(unit, target);
-      if (unit.def.id === 'bull' && d < 82) {
-        const nx = (target.x - unit.x) / d;
-        const ny = (target.y - unit.y) / d;
-        target.x += nx * 38;
-        target.y += ny * 24;
-        target.cc = { type: 'knockback', t: .35 };
-        applyDamage(unit, target, unit.def.power * 1.1, '公牛冲散阵型');
-        unit.cooldown = 2.8;
-        return true;
-      }
-      if (unit.def.id === 'eagle' && d < 135 && target.hp / target.maxHp < .62) {
-        applyDamage(unit, target, unit.def.power * 1.75, '鹰从空中俯冲');
-        unit.cooldown = 3.4;
-        return true;
-      }
-      if (unit.def.id === 'crocodile' && d < 70 && zoneAt(unit.x, unit.y) === TAGS.Water) {
-        target.cc = { type: 'grab', t: .8 };
-        applyDamage(unit, target, unit.def.power * 1.35, '鳄鱼在水边抓咬');
-        unit.cooldown = 3.2;
-        return true;
-      }
-      if (unit.def.id === 'spider' && d < 120) {
-        target.cc = { type: 'root', t: 1.2 };
-        applyDamage(unit, target, unit.def.power * .75, '蜘蛛织网定身');
-        unit.cooldown = 4.1;
-        return true;
-      }
-      if (unit.def.id === 'turtle' && unit.hp / unit.maxHp < .55) {
-        unit.hp = Math.min(unit.maxHp, unit.hp + 18);
-        emit('defend', '乌龟缩壳恢复', { x: unit.x, y: unit.y });
-        unit.cooldown = 5.5;
-        return true;
-      }
-      if (unit.def.id === 'chicken' && d < unit.def.attackReach) {
-        applyDamage(unit, target, unit.def.power, '母鸡远程撒米');
-        unit.cooldown = 1.6;
-        return true;
-      }
-      return false;
-    }
-
-    function updateUnit(unit, dt) {
-      if (unit.dead) return;
-      unit.cooldown = Math.max(0, unit.cooldown - dt);
-      unit.hitFlash = Math.max(0, unit.hitFlash - dt);
-      if (unit.cc) {
-        unit.cc.t -= dt;
-        if (unit.cc.t <= 0) unit.cc = null;
-      }
-
-      const target = chooseTarget(unit);
-      if (!target) return;
-      if (specialAction(unit, target)) return;
-
-      const d = Math.max(1, dist(unit, target));
-      const desired = { x: target.x, y: target.y };
-      const friends = state.units.filter(u => u.side === unit.side && u.uid !== unit.uid && !u.dead);
-
-      if (unit.instinct === 'territory') {
-        desired.x = unit.side === 'blue' ? 245 : 715;
-        desired.y = clamp(unit.y * .65 + MAP.guardPoint.y * .35, 90, 510);
-      }
-      if (unit.instinct === 'herd' && friends.length) {
-        const cx = friends.reduce((s, f) => s + f.x, 0) / friends.length;
-        const cy = friends.reduce((s, f) => s + f.y, 0) / friends.length;
-        desired.x = (desired.x + cx) / 2;
-        desired.y = (desired.y + cy) / 2;
-      }
-      if (unit.instinct === 'prowl') {
-        desired.x = target.x + (unit.side === 'blue' ? -80 : 80);
-        desired.y = target.y + (unit.y < target.y ? -80 : 80);
-      }
-      if (state.activeOrder?.kind === 'retreat' && state.activeOrder.targetId === unit.uid) {
-        desired.x = unit.side === 'blue' ? 90 : 870;
-        desired.y = 300;
-      }
-      if (state.activeOrder?.kind === 'guard') {
-        desired.x = (desired.x + MAP.guardPoint.x) / 2;
-        desired.y = (desired.y + MAP.guardPoint.y) / 2;
-      }
-
-      const dx = desired.x - unit.x;
-      const dy = desired.y - unit.y;
-      const len = Math.hypot(dx, dy) || 1;
-      const reach = unit.def.attackReach + unit.def.bodySize + target.def.bodySize;
-      const wantsDistance = unit.def.id === 'chicken' || unit.def.id === 'eagle' || unit.def.id === 'spider';
-      const stopAt = wantsDistance ? reach * .82 : reach * .42;
-      const ccMul = unit.cc ? (unit.cc.type === 'root' || unit.cc.type === 'grab' ? 0 : .45) : 1;
-      const speed = unit.def.moveSpeed * layerMoveMultiplier(unit) * ccMul;
-
-      if (d > stopAt) {
-        unit.vx = dx / len * speed;
-        unit.vy = dy / len * speed;
-      } else {
-        unit.vx *= .5;
-        unit.vy *= .5;
-      }
-
-      unit.x = clamp(unit.x + unit.vx * dt, 28, 932);
-      unit.y = clamp(unit.y + unit.vy * dt, 34, 566);
-
-      if (d < reach && unit.cooldown <= 0) {
-        applyDamage(unit, target, unit.def.power, null);
-        unit.cooldown = unit.def.id === 'chicken' ? 1.8 : 1.15;
-      }
-      unit.action = target ? `${INSTINCTS[unit.instinct].name} ${target.def.name}` : '待命';
-    }
-
-    function resolveCollisions() {
-      for (let i = 0; i < state.units.length; i++) {
-        for (let j = i + 1; j < state.units.length; j++) {
-          const a = state.units[i];
-          const b = state.units[j];
-          if (a.dead || b.dead) continue;
-          const d = Math.max(1, dist(a, b));
-          const min = a.def.bodySize + b.def.bodySize;
-          if (d >= min) continue;
-          const nx = (b.x - a.x) / d;
-          const ny = (b.y - a.y) / d;
-          const push = (min - d) / 2;
-          a.x -= nx * push;
-          a.y -= ny * push;
-          b.x += nx * push;
-          b.y += ny * push;
-        }
-      }
-    }
-
-    function checkWinner() {
-      const blue = state.units.filter(u => u.side === 'blue' && !u.dead).length;
-      const red = state.units.filter(u => u.side === 'red' && !u.dead).length;
-      if (state.phase === 'battle' && (blue === 0 || red === 0)) {
-        state.phase = 'ended';
-        state.winner = blue > red ? '蓝队' : red > blue ? '红队' : '平局';
-        emit('end', `${state.winner} 获胜`, { x: 480, y: 90 });
-      }
-    }
-
-    function step(ts) {
-      if (!state.lastTs) state.lastTs = ts;
-      const dt = Math.min((ts - state.lastTs) / 1000, .05);
-      state.lastTs = ts;
-      if (state.phase === 'battle') {
-        state.time += dt;
-        if (state.activeOrder) {
-          state.activeOrder.t -= dt;
-          if (state.activeOrder.t <= 0) state.activeOrder = null;
-        }
-        state.units.forEach(u => updateUnit(u, dt));
-        resolveCollisions();
-        checkWinner();
-      }
-      state.effects.forEach(e => e.life -= dt);
-      state.effects = state.effects.filter(e => e.life > 0);
-      draw();
-      updateStats();
-      requestAnimationFrame(step);
-    }
-
-    function drawMap() {
-      ctx.fillStyle = '#33402f';
-      ctx.fillRect(0, 0, 960, 600);
-      ctx.fillStyle = '#2b6f90';
-      ctx.fillRect(410, 0, 150, 600);
-      ctx.fillStyle = 'rgba(169,213,230,.22)';
-      for (let y = 0; y < 620; y += 42) {
-        ctx.beginPath();
-        ctx.moveTo(410, y);
-        ctx.bezierCurveTo(450, y + 20, 520, y - 22, 560, y + 10);
-        ctx.strokeStyle = 'rgba(231,246,255,.42)';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-      }
-      ctx.fillStyle = '#7a6249';
-      roundRect(95, 95, 180, 115, 8, true);
-      roundRect(685, 390, 180, 115, 8, true);
-      ctx.fillStyle = '#485363';
-      ctx.fillRect(0, 0, 960, 22);
-      ctx.fillRect(0, 578, 960, 22);
-      ctx.strokeStyle = 'rgba(255,255,255,.14)';
-      ctx.setLineDash([8, 8]);
-      ctx.strokeRect(35, 55, 260, 490);
-      ctx.strokeRect(665, 55, 260, 490);
-      ctx.setLineDash([]);
-      ctx.fillStyle = 'rgba(231,182,75,.22)';
-      ctx.beginPath();
-      ctx.arc(MAP.guardPoint.x, MAP.guardPoint.y, 58, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    function drawUnit(unit) {
-      const r = unit.def.bodySize;
-      ctx.save();
-      ctx.globalAlpha = unit.dead ? .25 : 1;
-      if (unit.hitFlash > 0) ctx.shadowColor = '#fff', ctx.shadowBlur = 18;
-      ctx.translate(unit.x, unit.y);
-      ctx.fillStyle = 'rgba(0,0,0,.24)';
-      ctx.beginPath();
-      ctx.ellipse(0, r * .78, r * 1.25, r * .35, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = unit.def.color;
-      ctx.strokeStyle = unit.side === 'blue' ? '#70b8ff' : '#ff817b';
-      ctx.lineWidth = 3;
-      if (unit.def.id === 'eagle') {
-        ctx.beginPath();
-        ctx.moveTo(-r * 1.6, 0);
-        ctx.lineTo(0, -r * .65);
-        ctx.lineTo(r * 1.6, 0);
-        ctx.lineTo(0, r * .7);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-      } else if (unit.def.id === 'spider') {
-        for (let i = 0; i < 8; i++) {
-          const a = Math.PI * 2 / 8 * i;
-          ctx.beginPath();
-          ctx.moveTo(Math.cos(a) * r * .5, Math.sin(a) * r * .4);
-          ctx.lineTo(Math.cos(a) * r * 1.45, Math.sin(a) * r * 1.05);
-          ctx.strokeStyle = unit.def.color;
-          ctx.lineWidth = 3;
-          ctx.stroke();
-        }
-        ctx.beginPath();
-        ctx.ellipse(0, 0, r, r * .78, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = unit.side === 'blue' ? '#70b8ff' : '#ff817b';
-        ctx.stroke();
-      } else {
-        ctx.beginPath();
-        ctx.ellipse(0, 0, r * 1.08, r * .78, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-      }
-      ctx.font = `${Math.max(18, r * 1.15)}px system-ui`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(unit.def.icon, 0, -r * 1.15);
-      ctx.fillStyle = '#101319';
-      ctx.fillRect(-r * 1.35, -r * 2.15, r * 2.7, 6);
-      ctx.fillStyle = unit.side === 'blue' ? '#4fa3ff' : '#e35d5b';
-      ctx.fillRect(-r * 1.35, -r * 2.15, r * 2.7 * (unit.hp / unit.maxHp), 6);
-      ctx.fillStyle = '#fff';
-      ctx.font = '11px system-ui';
-      ctx.fillText(`${Math.ceil(unit.hp)}`, 0, -r * 2.42);
-      ctx.restore();
-    }
-
-    function drawEffects() {
-      state.effects.forEach(e => {
-        const k = e.life / e.max;
-        ctx.save();
-        ctx.globalAlpha = clamp(k, 0, 1);
-        if (e.kind === 'hit') {
-          ctx.strokeStyle = e.color || '#fff';
-          ctx.lineWidth = 4;
-          ctx.beginPath();
-          ctx.arc(e.x, e.y, 30 * (1 - k), 0, Math.PI * 2);
-          ctx.stroke();
-        } else {
-          ctx.fillStyle = '#fff';
-          ctx.font = '16px system-ui';
-          ctx.textAlign = 'center';
-          ctx.fillText(e.text, e.x, e.y - (1 - k) * 28);
-        }
-        ctx.restore();
-      });
-    }
-
-    function draw() {
-      drawMap();
-      state.units.forEach(drawUnit);
-      if (state.phase === 'deploy') drawDeployHandles();
-      drawEffects();
-    }
-
-    function drawDeployHandles() {
-      [...state.blueTeam.map((s, i) => ['blue', i, s]), ...state.redTeam.map((s, i) => ['red', i, s])].forEach(([side, i, slot]) => {
-        ctx.save();
-        ctx.strokeStyle = side === 'blue' ? '#4fa3ff' : '#e35d5b';
-        ctx.setLineDash([5, 5]);
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(slot.x, slot.y, 28, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = '#fff';
-        ctx.font = '13px system-ui';
-        ctx.textAlign = 'center';
-        ctx.fillText(`${side === 'blue' ? '蓝' : '红'}${i + 1}`, slot.x, slot.y + 44);
-        ctx.restore();
-      });
-    }
-
-    function roundRect(x, y, w, h, r, fill) {
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.arcTo(x + w, y, x + w, y + h, r);
-      ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r);
-      ctx.arcTo(x, y, x + w, y, r);
-      if (fill) ctx.fill();
-      else ctx.stroke();
-    }
-
-    function renderAnimalGrid() {
-      const grid = document.getElementById('animalGrid');
-      grid.innerHTML = Object.values(ANIMALS).map(a => `
-        <button class="animal-card" data-animal="${a.id}">
-          <span class="icon">${a.icon}</span>
-          <span><span class="name">${a.name}</span><span class="role">${a.role}</span></span>
-        </button>
-      `).join('');
-      grid.querySelectorAll('button').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const list = state.selectedSide === 'blue' ? state.blueTeam : state.redTeam;
-          list[state.selectedSlot].animal = btn.dataset.animal;
-          rebuildDeployUnits();
-          renderTeams();
-        });
-      });
-    }
-
-    function renderTeams() {
-      renderTeam('blue');
-      renderTeam('red');
-    }
-
-    function renderTeam(side) {
-      const list = side === 'blue' ? state.blueTeam : state.redTeam;
-      const el = document.getElementById(side === 'blue' ? 'blueTeam' : 'redTeam');
-      el.innerHTML = list.map((slot, i) => {
-        const a = ANIMALS[slot.animal];
-        return `
-          <div class="slot" data-side="${side}" data-slot="${i}">
-            <button>
-              <div class="slot-title">${a.icon} ${i + 1}. ${a.name}</div>
-              <div class="slot-meta">${Math.round(slot.x)},${Math.round(slot.y)} · ${INSTINCTS[slot.instinct].name}</div>
-            </button>
-            <select>
-              ${Object.entries(INSTINCTS).map(([key, v]) => `<option value="${key}" ${slot.instinct === key ? 'selected' : ''}>${v.name}</option>`).join('')}
-            </select>
-          </div>
-        `;
-      }).join('');
-      el.querySelectorAll('.slot').forEach(row => {
-        row.querySelector('button').addEventListener('click', () => {
-          state.selectedSide = side;
-          state.selectedSlot = Number(row.dataset.slot);
-        });
-        row.querySelector('select').addEventListener('change', ev => {
-          list[Number(row.dataset.slot)].instinct = ev.target.value;
-          rebuildDeployUnits();
-          renderTeams();
-        });
-      });
-    }
-
-    function renderLog() {
-      const el = document.getElementById('eventLog');
-      el.innerHTML = state.log.map(l => `<div class="log-entry">${l.t.toFixed(1)}s · ${l.text}</div>`).join('');
-    }
-
-    function updateStats() {
-      const blue = state.units.filter(u => u.side === 'blue' && !u.dead).length || state.blueTeam.length;
-      const red = state.units.filter(u => u.side === 'red' && !u.dead).length || state.redTeam.length;
-      document.getElementById('blueAlive').textContent = blue;
-      document.getElementById('redAlive').textContent = red;
-      document.getElementById('ordersLeft').textContent = state.ordersLeft;
-      document.getElementById('timer').textContent = `${state.time.toFixed(1)}s`;
-      document.getElementById('battleState').textContent = state.phase === 'deploy' ? '部署阶段' : state.phase === 'battle' ? '战斗中' : `${state.winner}胜利`;
-      document.getElementById('startBattle').disabled = state.phase === 'battle';
-      document.querySelectorAll('.orders button').forEach(b => b.disabled = state.phase !== 'battle' || state.ordersLeft <= 0);
-    }
-
-    function rebuildDeployUnits() {
-      if (state.phase !== 'deploy') return;
-      state.units = [
-        ...state.blueTeam.map((s, i) => makeUnit('blue', i, s)),
-        ...state.redTeam.map((s, i) => makeUnit('red', i, s))
-      ];
-    }
-
-    function startBattle() {
-      state.phase = 'battle';
-      state.time = 0;
-      state.ordersLeft = 2;
-      state.activeOrder = null;
-      state.winner = null;
-      rebuildDeployUnits();
-      emit('start', '战斗开始：3v3 河谷全灭战', { x: 480, y: 95 });
-      updateStats();
-    }
-
-    function resetDeploy() {
-      state.phase = 'deploy';
-      state.time = 0;
-      state.ordersLeft = 2;
-      state.activeOrder = null;
-      state.winner = null;
-      state.log = [];
-      state.effects = [];
-      state.blueTeam.forEach((s, i) => { s.x = [180, 130, 205][i]; s.y = [210, 305, 395][i]; });
-      state.redTeam.forEach((s, i) => { s.x = [780, 830, 755][i]; s.y = [210, 305, 395][i]; });
-      rebuildDeployUnits();
-      renderLog();
-      updateStats();
-    }
-
-    function randomTeams() {
-      const keys = Object.keys(ANIMALS);
-      state.blueTeam.forEach(s => s.animal = keys[Math.floor(Math.random() * keys.length)]);
-      state.redTeam.forEach(s => s.animal = keys[Math.floor(Math.random() * keys.length)]);
-      rebuildDeployUnits();
-      renderTeams();
-    }
-
-    function useOrder(kind) {
-      if (state.phase !== 'battle' || state.ordersLeft <= 0) return;
-      if (kind === 'focus') {
-        const target = state.units.filter(u => u.side === 'red' && !u.dead).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
-        if (!target) return;
-        state.activeOrder = { kind, targetId: target.uid, t: 5 };
-        emit('order', `集猎：全队盯住 ${target.def.name}`, { x: target.x, y: target.y });
-      }
-      if (kind === 'retreat') {
-        const target = state.units.filter(u => u.side === 'blue' && !u.dead).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
-        if (!target) return;
-        state.activeOrder = { kind, targetId: target.uid, t: 4 };
-        emit('order', `撤退：${target.def.name} 后撤`, { x: target.x, y: target.y });
-      }
-      if (kind === 'guard') {
-        state.activeOrder = { kind, t: 5 };
-        emit('order', '守域：争夺河口', MAP.guardPoint);
-      }
-      state.ordersLeft -= 1;
-      updateStats();
-    }
-
-    function handleCanvasClick(ev) {
-      if (state.phase !== 'deploy') return;
-      const rect = canvas.getBoundingClientRect();
-      const x = (ev.clientX - rect.left) / rect.width * canvas.width;
-      const y = (ev.clientY - rect.top) / rect.height * canvas.height;
-      const list = state.selectedSide === 'blue' ? state.blueTeam : state.redTeam;
-      const safeX = state.selectedSide === 'blue' ? clamp(x, 55, 330) : clamp(x, 630, 905);
-      list[state.selectedSlot].x = safeX;
-      list[state.selectedSlot].y = clamp(y, 65, 535);
-      rebuildDeployUnits();
-      renderTeams();
-    }
-
+    const state = { screen: 'home', phase: 'deploy', blueTeam: [{ animal: 'bull', instinct: 'territory', x: 178, y: 210 }, { animal: 'chicken', instinct: 'herd', x: 128, y: 306 }, { animal: 'eagle', instinct: 'hunt', x: 205, y: 396 }], redTeam: [{ animal: 'crocodile', instinct: 'hunt', x: 780, y: 210 }, { animal: 'turtle', instinct: 'territory', x: 830, y: 306 }, { animal: 'spider', instinct: 'prowl', x: 755, y: 396 }], units: [], effects: [], log: [], keyMoments: [], selectedSide: 'blue', selectedSlot: 0, ordersLeft: 2, activeOrder: null, time: 0, lastTs: 0, winner: null };
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+    function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+    function zoneAt(x, y) { return (MAP.zones.find(z => x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h) || { layer: TAGS.Ground }).layer; }
+    function emit(type, text, data = {}) { const item = { type, text, t: state.time, data }; state.log.unshift(item); if (['kill', 'order', 'defend'].includes(type)) state.keyMoments.unshift(item); state.log = state.log.slice(0, 24); state.keyMoments = state.keyMoments.slice(0, 5); state.effects.push({ kind: 'text', text, x: data.x || 480, y: data.y || 100, life: 1.4, max: 1.4 }); renderLog(); }
+    function makeUnit(side, slot, cfg) { const def = ANIMALS[cfg.animal]; return { uid: `${side}-${slot}-${def.id}`, side, slot, def, instinct: cfg.instinct, x: cfg.x, y: cfg.y, vx: 0, vy: 0, hp: def.health, maxHp: def.health, cooldown: 0, cc: null, dead: false, action: '部署', hitFlash: 0 }; }
+    function rebuildDeployUnits(force = false) { if (state.phase !== 'deploy' && !force) return; state.units = [...state.blueTeam.map((s, i) => makeUnit('blue', i, s)), ...state.redTeam.map((s, i) => makeUnit('red', i, s))]; }
+    function layerMoveMultiplier(unit) { const layer = zoneAt(unit.x, unit.y); if (unit.def.layers.includes(layer)) return 1; if (layer === TAGS.Water) return .46; if (layer === TAGS.HighGround) return .82; return .68; }
+    function scoreTarget(unit, target) { const d = Math.max(1, dist(unit, target)); const hpRatio = target.hp / target.maxHp; let score = 960 / d + (1 - hpRatio) * 2; if (unit.instinct === 'hunt') score += (1 - hpRatio) * 3.4; if (unit.instinct === 'territory') score += Math.max(0, 1.5 - Math.abs(target.x - (unit.side === 'blue' ? 240 : 720)) / 260); if (unit.instinct === 'herd') score += state.units.some(u => u.side === unit.side && u.uid !== unit.uid && !u.dead && dist(u, unit) < 155) ? 1 : -.2; if (unit.instinct === 'prowl') score += Math.abs(target.y - unit.y) / 360; if (state.activeOrder?.kind === 'focus' && state.activeOrder.targetId === target.uid) score += 5; return score; }
+    function chooseTarget(unit) { const enemies = state.units.filter(u => u.side !== unit.side && !u.dead); return enemies.length ? enemies.map(e => [scoreTarget(unit, e), e]).sort((a, b) => b[0] - a[0])[0][1] : null; }
+    function applyDamage(source, target, amount, tag) { if (!target || target.dead) return; const final = target.def.id === 'turtle' ? amount * .72 : amount; target.hp -= final; target.hitFlash = .16; state.effects.push({ kind: 'hit', x: target.x, y: target.y, color: source.def.accent, life: .35, max: .35 }); if (target.hp <= 0) { target.hp = 0; target.dead = true; emit('kill', `${source.def.name} 击败 ${target.def.name}`, { x: target.x, y: target.y }); } else if (tag) emit('hit', tag, { x: target.x, y: target.y }); }
+    function specialAction(unit, target) { if (!target || unit.cooldown > 0) return false; const d = Math.max(1, dist(unit, target)); if (unit.def.id === 'bull' && d < 82) { const nx = (target.x - unit.x) / d, ny = (target.y - unit.y) / d; target.x += nx * 40; target.y += ny * 24; target.cc = { type: 'knockback', t: .34 }; applyDamage(unit, target, unit.def.power * 1.12, '公牛撞散阵型'); unit.cooldown = 2.8; return true; } if (unit.def.id === 'eagle' && d < 145 && target.hp / target.maxHp < .64) { applyDamage(unit, target, unit.def.power * 1.8, '鹰从空中俯冲'); unit.cooldown = 3.5; return true; } if (unit.def.id === 'crocodile' && d < 74 && zoneAt(unit.x, unit.y) === TAGS.Water) { target.cc = { type: 'grab', t: .8 }; applyDamage(unit, target, unit.def.power * 1.35, '鳄鱼水边抓咬'); unit.cooldown = 3.2; return true; } if (unit.def.id === 'spider' && d < 124) { target.cc = { type: 'root', t: 1.15 }; applyDamage(unit, target, unit.def.power * .75, '蜘蛛织网定身'); unit.cooldown = 4.0; return true; } if (unit.def.id === 'turtle' && unit.hp / unit.maxHp < .52) { unit.hp = Math.min(unit.maxHp, unit.hp + 20); emit('defend', '乌龟缩壳稳住战线', { x: unit.x, y: unit.y }); unit.cooldown = 5.4; return true; } if (unit.def.id === 'chicken' && d < unit.def.attackReach) { applyDamage(unit, target, unit.def.power, '母鸡撒米压制'); unit.cooldown = 1.55; return true; } return false; }
+    function updateUnit(unit, dt) { if (unit.dead) return; unit.cooldown = Math.max(0, unit.cooldown - dt); unit.hitFlash = Math.max(0, unit.hitFlash - dt); if (unit.cc) { unit.cc.t -= dt; if (unit.cc.t <= 0) unit.cc = null; } const target = chooseTarget(unit); if (!target || specialAction(unit, target)) return; const friends = state.units.filter(u => u.side === unit.side && u.uid !== unit.uid && !u.dead); const desired = { x: target.x, y: target.y }; if (unit.instinct === 'territory') { desired.x = unit.side === 'blue' ? 245 : 715; desired.y = clamp((unit.y * .62) + (MAP.guardPoint.y * .38), 90, 510); } if (unit.instinct === 'herd' && friends.length) { desired.x = (desired.x + friends.reduce((s, f) => s + f.x, 0) / friends.length) / 2; desired.y = (desired.y + friends.reduce((s, f) => s + f.y, 0) / friends.length) / 2; } if (unit.instinct === 'prowl') { desired.x = target.x + (unit.side === 'blue' ? -90 : 90); desired.y = target.y + (unit.y < target.y ? -82 : 82); } if (state.activeOrder?.kind === 'retreat' && state.activeOrder.targetId === unit.uid) { desired.x = unit.side === 'blue' ? 86 : 874; desired.y = 300; } if (state.activeOrder?.kind === 'guard') { desired.x = (desired.x + MAP.guardPoint.x) / 2; desired.y = (desired.y + MAP.guardPoint.y) / 2; } const dx = desired.x - unit.x, dy = desired.y - unit.y, len = Math.hypot(dx, dy) || 1; const reach = unit.def.attackReach + unit.def.bodySize + target.def.bodySize; const wantsDistance = ['chicken', 'eagle', 'spider'].includes(unit.def.id); const stopAt = wantsDistance ? reach * .84 : reach * .42; const ccMul = unit.cc ? (unit.cc.type === 'root' || unit.cc.type === 'grab' ? 0 : .45) : 1; if (dist(unit, target) > stopAt) { const speed = unit.def.moveSpeed * layerMoveMultiplier(unit) * ccMul; unit.vx = dx / len * speed; unit.vy = dy / len * speed; } else { unit.vx *= .5; unit.vy *= .5; } unit.x = clamp(unit.x + unit.vx * dt, 28, 932); unit.y = clamp(unit.y + unit.vy * dt, 34, 566); if (dist(unit, target) < reach && unit.cooldown <= 0) { applyDamage(unit, target, unit.def.power, null); unit.cooldown = unit.def.id === 'chicken' ? 1.8 : 1.15; } unit.action = `${INSTINCTS[unit.instinct].name} ${target.def.name}`; }
+    function resolveCollisions() { for (let i = 0; i < state.units.length; i++) for (let j = i + 1; j < state.units.length; j++) { const a = state.units[i], b = state.units[j]; if (a.dead || b.dead) continue; const d = Math.max(1, dist(a, b)), min = a.def.bodySize + b.def.bodySize; if (d < min) { const nx = (b.x - a.x) / d, ny = (b.y - a.y) / d, push = (min - d) / 2; a.x -= nx * push; a.y -= ny * push; b.x += nx * push; b.y += ny * push; } } }
+    function checkWinner() { const blue = state.units.filter(u => u.side === 'blue' && !u.dead).length; const red = state.units.filter(u => u.side === 'red' && !u.dead).length; if (state.phase === 'battle' && (blue === 0 || red === 0)) { state.phase = 'ended'; state.winner = blue > red ? '蓝队' : red > blue ? '红队' : '平局'; emit('end', `${state.winner} 获胜`, { x: 480, y: 95 }); updateRecap(); goScreen('review'); } }
+    function step(ts) { if (!state.lastTs) state.lastTs = ts; const dt = Math.min((ts - state.lastTs) / 1000, .05); state.lastTs = ts; if (state.phase === 'battle') { state.time += dt; if (state.activeOrder) { state.activeOrder.t -= dt; if (state.activeOrder.t <= 0) state.activeOrder = null; } state.units.forEach(u => updateUnit(u, dt)); resolveCollisions(); checkWinner(); } state.effects.forEach(e => e.life -= dt); state.effects = state.effects.filter(e => e.life > 0); draw(); updateStats(); requestAnimationFrame(step); }
+    function draw() { ctx.clearRect(0, 0, 960, 600); drawMap(); state.units.forEach(drawUnit); if (state.phase === 'deploy') drawDeployHandles(); drawEffects(); }
+    function drawMap() { const grd = ctx.createLinearGradient(0, 0, 960, 600); grd.addColorStop(0, '#26382b'); grd.addColorStop(1, '#33412e'); ctx.fillStyle = grd; ctx.fillRect(0, 0, 960, 600); ctx.fillStyle = '#2d7090'; ctx.fillRect(410, 0, 150, 600); ctx.strokeStyle = 'rgba(214,242,255,.35)'; ctx.lineWidth = 3; for (let y = 0; y < 630; y += 42) { ctx.beginPath(); ctx.moveTo(410, y); ctx.bezierCurveTo(454, y + 22, 520, y - 18, 560, y + 8); ctx.stroke(); } ctx.fillStyle = '#80694e'; roundRect(92, 96, 182, 118, 8, true); roundRect(686, 386, 182, 118, 8, true); ctx.fillStyle = '#4a5666'; ctx.fillRect(0, 0, 960, 22); ctx.fillRect(0, 578, 960, 22); ctx.strokeStyle = 'rgba(255,255,255,.16)'; ctx.setLineDash([8, 8]); ctx.strokeRect(36, 56, 260, 488); ctx.strokeRect(664, 56, 260, 488); ctx.setLineDash([]); ctx.fillStyle = 'rgba(231,182,75,.2)'; ctx.beginPath(); ctx.arc(MAP.guardPoint.x, MAP.guardPoint.y, 60, 0, Math.PI * 2); ctx.fill(); }
+    function roundRect(x, y, w, h, r, fill) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); fill ? ctx.fill() : ctx.stroke(); }
+    function bodyGradient(r, c1, c2) { const g = ctx.createRadialGradient(-r * .35, -r * .45, r * .2, 0, 0, r * 1.8); g.addColorStop(0, c2); g.addColorStop(1, c1); return g; }
+    function outline(unit) { ctx.lineWidth = 3; ctx.strokeStyle = unit.side === 'blue' ? '#70b8ff' : '#ff817b'; ctx.stroke(); }
+    function drawUnit(unit) { const r = unit.def.bodySize; ctx.save(); ctx.translate(unit.x, unit.y); ctx.globalAlpha = unit.dead ? .25 : 1; ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(0, r * .9, r * 1.65, r * .42, 0, 0, Math.PI * 2); ctx.fill(); ctx.shadowColor = unit.hitFlash ? '#ffffff' : 'transparent'; ctx.shadowBlur = unit.hitFlash ? 18 : 0; if (unit.def.id === 'bull') drawBull(r, unit); if (unit.def.id === 'eagle') drawEagle(r, unit); if (unit.def.id === 'turtle') drawTurtle(r, unit); if (unit.def.id === 'chicken') drawChicken(r, unit); if (unit.def.id === 'crocodile') drawCrocodile(r, unit); if (unit.def.id === 'spider') drawSpider(r, unit); drawHealth(unit, r); ctx.restore(); }
+    function drawBull(r, u) { ctx.fillStyle = bodyGradient(r, u.def.color, '#d39a62'); ctx.beginPath(); ctx.ellipse(0, 0, r * 1.45, r * .82, 0, 0, Math.PI * 2); ctx.fill(); outline(u); ctx.fillStyle = '#533623'; ctx.fillRect(r * .55, -r * .45, r * .65, r * .7); ctx.strokeStyle = u.def.accent; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(r * .75, -r * .62); ctx.quadraticCurveTo(r * 1.1, -r * 1.25, r * 1.55, -r * .82); ctx.moveTo(r * .75, r * .08); ctx.quadraticCurveTo(r * 1.15, r * .65, r * 1.55, r * .18); ctx.stroke(); }
+    function drawEagle(r, u) { ctx.fillStyle = bodyGradient(r, u.def.color, '#c5b894'); ctx.beginPath(); ctx.moveTo(-r * 2.2, .5); ctx.quadraticCurveTo(-r * .8, -r * 1.25, 0, -r * .25); ctx.quadraticCurveTo(r * .8, -r * 1.25, r * 2.2, .5); ctx.quadraticCurveTo(.6, r * .9, -r * 2.2, .5); ctx.fill(); outline(u); ctx.fillStyle = u.def.accent; ctx.beginPath(); ctx.arc(r * .45, -r * .48, r * .42, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#d99a32'; ctx.beginPath(); ctx.moveTo(r * .86, -r * .5); ctx.lineTo(r * 1.35, -r * .35); ctx.lineTo(r * .86, -r * .18); ctx.fill(); }
+    function drawTurtle(r, u) { ctx.fillStyle = bodyGradient(r, '#315f35', u.def.accent); ctx.beginPath(); ctx.ellipse(0, 0, r * 1.25, r, 0, 0, Math.PI * 2); ctx.fill(); outline(u); ctx.strokeStyle = '#1d3b25'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-r, 0); ctx.lineTo(r, 0); ctx.moveTo(0, -r); ctx.lineTo(0, r); ctx.stroke(); ctx.fillStyle = '#6b9b61'; ctx.beginPath(); ctx.arc(r * 1.2, -r * .1, r * .36, 0, Math.PI * 2); ctx.fill(); }
+    function drawChicken(r, u) { ctx.fillStyle = bodyGradient(r, u.def.color, '#fff0b9'); ctx.beginPath(); ctx.ellipse(0, r * .05, r, r * 1.18, -.15, 0, Math.PI * 2); ctx.fill(); outline(u); ctx.fillStyle = u.def.accent; ctx.beginPath(); ctx.arc(-r * .16, -r * 1.16, r * .22, 0, Math.PI * 2); ctx.arc(r * .1, -r * 1.22, r * .2, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#e9a32e'; ctx.beginPath(); ctx.moveTo(r * .82, -r * .35); ctx.lineTo(r * 1.26, -r * .18); ctx.lineTo(r * .82, 0); ctx.fill(); }
+    function drawCrocodile(r, u) { ctx.fillStyle = bodyGradient(r, u.def.color, '#6ea16c'); ctx.beginPath(); ctx.ellipse(0, 0, r * 1.9, r * .58, 0, 0, Math.PI * 2); ctx.fill(); outline(u); ctx.fillStyle = '#274832'; ctx.beginPath(); ctx.moveTo(r * 1.2, -r * .45); ctx.lineTo(r * 2.2, -r * .18); ctx.lineTo(r * 1.2, r * .35); ctx.closePath(); ctx.fill(); ctx.strokeStyle = u.def.accent; ctx.lineWidth = 2; for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(i * r * .35, -r * .55); ctx.lineTo(i * r * .35 + r * .16, -r * .92); ctx.stroke(); } }
+    function drawSpider(r, u) { ctx.strokeStyle = u.def.color; ctx.lineWidth = 4; for (let i = 0; i < 8; i++) { const a = Math.PI * 2 / 8 * i; ctx.beginPath(); ctx.moveTo(Math.cos(a) * r * .55, Math.sin(a) * r * .4); ctx.lineTo(Math.cos(a) * r * 1.65, Math.sin(a) * r * 1.18); ctx.stroke(); } ctx.fillStyle = bodyGradient(r, u.def.color, u.def.accent); ctx.beginPath(); ctx.ellipse(0, 0, r * 1.05, r * .82, 0, 0, Math.PI * 2); ctx.fill(); outline(u); }
+    function drawHealth(unit, r) { ctx.shadowBlur = 0; ctx.fillStyle = '#0e1319'; ctx.fillRect(-r * 1.45, -r * 2.2, r * 2.9, 6); ctx.fillStyle = unit.side === 'blue' ? '#4fa3ff' : '#e35d5b'; ctx.fillRect(-r * 1.45, -r * 2.2, r * 2.9 * (unit.hp / unit.maxHp), 6); ctx.fillStyle = '#fff'; ctx.font = '11px system-ui'; ctx.textAlign = 'center'; ctx.fillText(Math.ceil(unit.hp), 0, -r * 2.45); }
+    function drawDeployHandles() { [...state.blueTeam.map((s, i) => ['blue', i, s]), ...state.redTeam.map((s, i) => ['red', i, s])].forEach(([side, i, slot]) => { ctx.save(); ctx.strokeStyle = side === 'blue' ? '#4fa3ff' : '#e35d5b'; ctx.setLineDash([5, 5]); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(slot.x, slot.y, 30, 0, Math.PI * 2); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = '13px system-ui'; ctx.textAlign = 'center'; ctx.fillText(`${side === 'blue' ? '蓝' : '红'}${i + 1}`, slot.x, slot.y + 46); ctx.restore(); }); }
+    function drawEffects() { state.effects.forEach(e => { const k = e.life / e.max; ctx.save(); ctx.globalAlpha = clamp(k, 0, 1); if (e.kind === 'hit') { ctx.strokeStyle = e.color || '#fff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(e.x, e.y, 34 * (1 - k), 0, Math.PI * 2); ctx.stroke(); } else { ctx.fillStyle = '#fff'; ctx.font = '16px system-ui'; ctx.textAlign = 'center'; ctx.fillText(e.text, e.x, e.y - (1 - k) * 30); } ctx.restore(); }); }
+    function goScreen(name) { state.screen = name; document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === `screen${name[0].toUpperCase()}${name.slice(1)}`)); document.querySelectorAll('.bottom-nav button').forEach(b => b.classList.toggle('active', b.dataset.go === name)); const stage = document.querySelector(`#screen${name[0].toUpperCase()}${name.slice(1)} .canvas-stage`); if (stage && !stage.contains(canvas)) stage.appendChild(canvas); updateStats(); requestAnimationFrame(draw); }
+    function renderAnimalGrid() { const grid = document.getElementById('animalGrid'); grid.innerHTML = Object.values(ANIMALS).map(a => `<button class="animal-card" data-animal="${a.id}"><span class="sigil">${a.mark}</span><span class="card-copy"><strong>${a.name}</strong><span class="muted">${a.role}</span></span></button>`).join(''); grid.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => { const list = state.selectedSide === 'blue' ? state.blueTeam : state.redTeam; list[state.selectedSlot].animal = btn.dataset.animal; rebuildDeployUnits(); renderTeams(); draw(); })); }
+    function renderTeams() { renderTeam('blue'); renderTeam('red'); }
+    function renderTeam(side) { const list = side === 'blue' ? state.blueTeam : state.redTeam; const el = document.getElementById(side === 'blue' ? 'blueTeam' : 'redTeam'); el.innerHTML = list.map((slot, i) => { const a = ANIMALS[slot.animal]; return `<div class="slot" data-side="${side}" data-slot="${i}"><button><div class="slot-title">${a.mark} ${i + 1}. ${a.name}</div><div class="muted">${Math.round(slot.x)},${Math.round(slot.y)} · ${INSTINCTS[slot.instinct].name}</div></button><select>${Object.entries(INSTINCTS).map(([key, v]) => `<option value="${key}" ${slot.instinct === key ? 'selected' : ''}>${v.name}</option>`).join('')}</select></div>`; }).join(''); el.querySelectorAll('.slot').forEach(row => { row.querySelector('button').addEventListener('click', () => { state.selectedSide = side; state.selectedSlot = Number(row.dataset.slot); syncDeployPick(); }); row.querySelector('select').addEventListener('change', ev => { list[Number(row.dataset.slot)].instinct = ev.target.value; rebuildDeployUnits(); renderTeams(); }); }); }
+    function syncDeployPick() { document.getElementById('deployPick').textContent = `${state.selectedSide === 'blue' ? '蓝队' : '红队'} ${state.selectedSlot + 1} 号`; }
+    function renderLog() { document.getElementById('eventLog').innerHTML = state.log.map(l => `<div class="log-entry">${l.t.toFixed(1)}s · ${l.text}</div>`).join(''); }
+    function updateRecap() { const lines = state.keyMoments.slice(0, 3).map(m => `${m.t.toFixed(1)}s：${m.text}`); document.getElementById('recap').innerHTML = lines.length ? lines.map(x => `<p>${x}</p>`).join('') : '还没有足够关键事件。'; }
+    function updateStats() { const blue = state.units.filter(u => u.side === 'blue' && !u.dead).length || state.blueTeam.length; const red = state.units.filter(u => u.side === 'red' && !u.dead).length || state.redTeam.length; document.getElementById('blueAlive').textContent = blue; document.getElementById('redAlive').textContent = red; document.getElementById('ordersLeft').textContent = state.ordersLeft; document.getElementById('timer').textContent = `${state.time.toFixed(1)}s`; document.getElementById('battleState').textContent = state.phase === 'deploy' ? '部署阶段' : state.phase === 'battle' ? '战斗中' : `${state.winner}胜利`; document.getElementById('startBattle').disabled = state.phase === 'battle'; document.querySelectorAll('.orders button').forEach(b => { if (b.id.startsWith('order')) b.disabled = state.phase !== 'battle' || state.ordersLeft <= 0; }); }
+    function startBattle() { state.phase = 'battle'; state.time = 0; state.ordersLeft = 2; state.activeOrder = null; state.winner = null; state.log = []; state.keyMoments = []; rebuildDeployUnits(true); goScreen('battle'); emit('start', '战斗开始：镜头切入河谷', { x: 480, y: 95 }); updateStats(); }
+    function resetDeploy() { state.phase = 'deploy'; state.time = 0; state.ordersLeft = 2; state.activeOrder = null; state.winner = null; state.log = []; state.keyMoments = []; state.effects = []; state.blueTeam.forEach((s, i) => { s.x = [178, 128, 205][i]; s.y = [210, 306, 396][i]; }); state.redTeam.forEach((s, i) => { s.x = [780, 830, 755][i]; s.y = [210, 306, 396][i]; }); rebuildDeployUnits(true); renderLog(); updateRecap(); updateStats(); draw(); }
+    function randomTeams() { const keys = Object.keys(ANIMALS); state.blueTeam.forEach(s => s.animal = keys[Math.floor(Math.random() * keys.length)]); state.redTeam.forEach(s => s.animal = keys[Math.floor(Math.random() * keys.length)]); rebuildDeployUnits(true); renderTeams(); draw(); }
+    function useOrder(kind) { if (state.phase !== 'battle' || state.ordersLeft <= 0) return; if (kind === 'focus') { const target = state.units.filter(u => u.side === 'red' && !u.dead).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0]; if (!target) return; state.activeOrder = { kind, targetId: target.uid, t: 5 }; emit('order', `集猎：锁定 ${target.def.name}`, { x: target.x, y: target.y }); } if (kind === 'retreat') { const target = state.units.filter(u => u.side === 'blue' && !u.dead).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0]; if (!target) return; state.activeOrder = { kind, targetId: target.uid, t: 4 }; emit('order', `撤退：${target.def.name} 后撤`, { x: target.x, y: target.y }); } if (kind === 'guard') { state.activeOrder = { kind, t: 5 }; emit('order', '守域：压住河口', MAP.guardPoint); } state.ordersLeft -= 1; updateStats(); }
+    function handleCanvasClick(ev) { if (state.phase !== 'deploy') return; const rect = canvas.getBoundingClientRect(), x = (ev.clientX - rect.left) / rect.width * canvas.width, y = (ev.clientY - rect.top) / rect.height * canvas.height; const list = state.selectedSide === 'blue' ? state.blueTeam : state.redTeam; list[state.selectedSlot].x = state.selectedSide === 'blue' ? clamp(x, 55, 330) : clamp(x, 630, 905); list[state.selectedSlot].y = clamp(y, 65, 535); rebuildDeployUnits(); renderTeams(); draw(); }
+    document.querySelectorAll('[data-go]').forEach(btn => btn.addEventListener('click', () => { if (btn.dataset.start) startBattle(); else goScreen(btn.dataset.go); }));
+    document.querySelectorAll('[data-pick]').forEach(btn => btn.addEventListener('click', () => { const [side, slot] = btn.dataset.pick.split('-'); state.selectedSide = side; state.selectedSlot = Number(slot); syncDeployPick(); }));
     document.getElementById('startBattle').addEventListener('click', startBattle);
     document.getElementById('resetDeploy').addEventListener('click', resetDeploy);
     document.getElementById('randomTeams').addEventListener('click', randomTeams);
@@ -943,23 +276,8 @@
     document.getElementById('orderRetreat').addEventListener('click', () => useOrder('retreat'));
     document.getElementById('orderGuard').addEventListener('click', () => useOrder('guard'));
     canvas.addEventListener('click', handleCanvasClick);
-
-    renderAnimalGrid();
-    renderTeams();
-    rebuildDeployUnits();
-    updateStats();
-    requestAnimationFrame(step);
-
-    window.__v2Game = {
-      state,
-      ANIMALS,
-      INSTINCTS,
-      MAP,
-      startBattle,
-      resetDeploy,
-      randomTeams,
-      useOrder
-    };
+    renderAnimalGrid(); renderTeams(); rebuildDeployUnits(true); syncDeployPick(); updateStats(); draw(); requestAnimationFrame(step);
+    window.__v2Game = { state, ANIMALS, INSTINCTS, MAP, startBattle, resetDeploy, randomTeams, useOrder, goScreen };
   </script>
 </body>
 </html>

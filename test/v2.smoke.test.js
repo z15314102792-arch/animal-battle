@@ -65,7 +65,8 @@ function check(name, condition, detail = '') {
     check('动物网格存在', await page.$('#animalGrid') !== null);
     check('蓝队面板存在', await page.$('#blueTeam') !== null);
     check('红队面板存在', await page.$('#redTeam') !== null);
-    check('战术指令存在', await page.$$eval('.orders button', els => els.length) === 3);
+    check('底部跳转存在', await page.$$eval('.bottom-nav button', els => els.length) === 5);
+    check('战术指令存在', await page.$$eval('#screenBattle .orders button', els => els.length) === 3);
 
     const data = await page.evaluate(() => ({
       animalCount: Object.keys(window.__v2Game.ANIMALS).length,
@@ -78,16 +79,18 @@ function check(name, condition, detail = '') {
     check('河谷空间层已注册', data.zoneCount >= 5, `实际 ${data.zoneCount}`);
     check('部署阶段 6 个单位', data.unitCount === 6, `实际 ${data.unitCount}`);
 
-    await page.click('#startBattle');
+    await page.click('#screenHome [data-start="1"]');
     await sleep(1200);
     const running = await page.evaluate(() => ({
       phase: window.__v2Game.state.phase,
+      screen: window.__v2Game.state.screen,
       units: window.__v2Game.state.units.length,
       aliveBlue: window.__v2Game.state.units.filter(u => u.side === 'blue' && !u.dead).length,
       aliveRed: window.__v2Game.state.units.filter(u => u.side === 'red' && !u.dead).length,
       time: window.__v2Game.state.time
     }));
     check('进入战斗阶段', running.phase === 'battle' || running.phase === 'ended', `实际 ${running.phase}`);
+    check('开始后切到战斗画面', running.screen === 'battle' || running.screen === 'review', `实际 ${running.screen}`);
     check('3v3 单位数量正确', running.units === 6, `实际 ${running.units}`);
     check('双方初始可战斗', running.aliveBlue > 0 && running.aliveRed > 0);
     check('战斗时间推进', running.time > 0.5, `实际 ${running.time}`);
